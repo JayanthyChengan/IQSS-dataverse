@@ -3,6 +3,8 @@ package edu.harvard.iq.dataverse.authorization.groups;
 import edu.harvard.iq.dataverse.DvObject;
 import edu.harvard.iq.dataverse.RoleAssigneeServiceBean;
 import edu.harvard.iq.dataverse.authorization.RoleAssignee;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationGroupProvider;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationGroupServiceBean;
 import edu.harvard.iq.dataverse.authorization.groups.impl.builtin.BuiltInGroupsProvider;
 import edu.harvard.iq.dataverse.authorization.groups.impl.explicit.ExplicitGroup;
 import edu.harvard.iq.dataverse.authorization.groups.impl.explicit.ExplicitGroupProvider;
@@ -46,14 +48,17 @@ public class GroupServiceBean {
     ExplicitGroupServiceBean explicitGroupService;
     @EJB
     MailDomainGroupServiceBean mailDomainGroupService;
-    
+    @EJB
+    AffiliationGroupServiceBean affiliationGroupService;
+
     private final Map<String, GroupProvider> groupProviders = new HashMap<>();
     
     private IpGroupProvider ipGroupProvider;
     private ShibGroupProvider shibGroupProvider;
     private ExplicitGroupProvider explicitGroupProvider;
     private MailDomainGroupProvider mailDomainGroupProvider;
-    
+    private AffiliationGroupProvider affiliationGroupProvider;
+
     @EJB
     RoleAssigneeServiceBean roleAssigneeSvc;
     
@@ -64,6 +69,7 @@ public class GroupServiceBean {
         addGroupProvider( shibGroupProvider = new ShibGroupProvider(shibGroupService) );
         addGroupProvider( explicitGroupProvider = explicitGroupService.getProvider() );
         addGroupProvider( mailDomainGroupProvider = mailDomainGroupService.getProvider() );
+        addGroupProvider( affiliationGroupProvider = new AffiliationGroupProvider(affiliationGroupService));
         Logger.getLogger(GroupServiceBean.class.getName()).log(Level.INFO, null, "PostConstruct group service call");
     }
 
@@ -84,11 +90,13 @@ public class GroupServiceBean {
     public ShibGroupProvider getShibGroupProvider() {
         return shibGroupProvider;
     }
-    
+
+    public AffiliationGroupProvider getAffiliationGroupProvider() { return  affiliationGroupProvider; }
+
     public MailDomainGroupProvider getMailDomainGroupProvider() {
         return mailDomainGroupProvider;
     }
-    
+
     /**
      * Finds all the groups {@code req} is part of in {@code dvo}'s context.
      * Recurses upwards in {@link ExplicitGroup}s, as needed.

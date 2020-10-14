@@ -92,7 +92,10 @@ public class ExternalTool implements Serializable {
     private String contentType;
     
     @Column(nullable = false)
-    private boolean hasPreviewMode;   
+    private boolean hasPreviewMode;
+
+    @Transient
+    private String displayNameLang;
 
 
     
@@ -214,6 +217,12 @@ public class ExternalTool implements Serializable {
     }
 
     public String  getToolName() { return toolName; }
+
+    //public String getDisplayNameLang() { return displayNameLang; }
+
+    public void setDisplayNameLang(String displayNameLang) {
+        this.displayNameLang = displayNameLang;
+    }
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
