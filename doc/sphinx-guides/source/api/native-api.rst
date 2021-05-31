@@ -1392,10 +1392,9 @@ The fully expanded example above (without environment variables) looks like this
 .. code-block:: bash
 
   curl -H "X-Dataverse-key:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" -X POST \
-    -F 'jsonData={"description":"My description bbb.","provFreeform":"Test prov freeform","categories":["Data"],"restrict":false}' \
+    -F 'jsonData=[{'description':'My description.','directoryLabel':'data/subdir1','categories':['Data'], 'restrict':'false', 'storageIdentifier':'s3://demo-dataverse-bucket:176e28068b0-1c3f80357c42', 'fileName':'file1.txt', 'mimeType':'text/plain', 'checksum': {'@type': 'SHA-1', '@value': '123456'}}, \
+                      {'description':'My description.','directoryLabel':'data/subdir1','categories':['Data'], 'restrict':'false', 'storageIdentifier':'s3://demo-dataverse-bucket:176e28068b0-1c3f80357d53', 'fileName':'file2.txt', 'mimeType':'text/plain', 'checksum': {'@type': 'SHA-1', '@value': '123789'}}]"' \
     "https://demo.dataverse.org/api/files/:persistentId/metadata?persistentId=doi:10.5072/FK2/AAA000"
-
-Also note that dataFileTags are not versioned and changes to these will update the published version of the file.
 
     
 Report the data (file) size of a Dataset
