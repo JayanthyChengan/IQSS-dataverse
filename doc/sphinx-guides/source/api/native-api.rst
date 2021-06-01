@@ -2093,8 +2093,7 @@ Note: The ``id`` returned in the json response is the id of the file metadata ve
 Adding File Metadata
 ~~~~~~~~~~~~~~~~~~~~
 
-This API call requires a ``jsonString`` expressing the metadata of multiple files and ``PERSISTENT_ID`` is the persistent id (DOI or Handle) of the dataset
-It adds file metadata to the database table where the file already exists in the storage.
+This API call requires a ``jsonString`` expressing the metadata of multiple files.  It adds file metadata to the database table where the file already copied to the storage.
 
 The jsonData object includes values for:
 
@@ -2125,11 +2124,7 @@ The fully expanded example above (without environment variables) looks like this
 
 .. code-block:: bash
 
-  curl -H "X-Dataverse-key:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" -X POST \
-    -F 'jsonData=[{'description':'My description.','directoryLabel':'data/subdir1','categories':['Data'], 'restrict':'false', 'storageIdentifier':'s3://demo-dataverse-bucket:176e28068b0-1c3f80357c42', 'fileName':'file1.txt', 'mimeType':'text/plain', 'checksum': {'@type': 'SHA-1', '@value': '123456'}}, \
-                      {'description':'My description.','directoryLabel':'data/subdir1','categories':['Data'], 'restrict':'false', 'storageIdentifier':'s3://demo-dataverse-bucket:176e28068b0-1c3f80357d53', 'fileName':'file2.txt', 'mimeType':'text/plain', 'checksum': {'@type': 'SHA-1', '@value': '123789'}}]"' \
-    "https://demo.dataverse.org/api/datasets/:persistentId/addFiles?persistentId=doi:10.5072/FK2/7U7YBV"
-
+  curl -H "X-Dataverse-key:93c8f952-da3c-4aa4-8217-75c441a24863" -X POST http://localhost:8080/api/datasets/:persistentId/addFiles?persistentId=doi:10.5072/FK2/OOINTM -F jsonData='[{"description":"My description.","directoryLabel":"data/subdir1","categories":["Data"], "restrict":"false", "storageIdentifier":"s3://demo-dataverse-bucket:176e28068b0-1c3f80357c42", "fileName":"file1.txt", "mimeType":"text/plain", "checksum": {"@type": "SHA-1", "@value": "123456"}}, {"description":"My description.","directoryLabel":"data/subdir1","categories":["Data"], "restrict":"false", "storageIdentifier":"s3://demo-dataverse-bucket:176e28068b0-1c3f80357d53", "fileName":"file2.txt", "mimeType":"text/plain", "checksum": {"@type": "SHA-1", "@value": "123789"}}]'
 
 Updating File Metadata
 ~~~~~~~~~~~~~~~~~~~~~~
