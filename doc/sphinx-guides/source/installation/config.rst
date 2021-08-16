@@ -2236,3 +2236,31 @@ By default, the name of the root Dataverse collection is used as the 'brandname'
 ++++++++++++++++++++++++++++++++++++++++++++++
 
 In the DDI metadata exports, the default behavior is to always add the repository (using its brandname - the root collection name or the value of :ref:`:InstallationName <:InstallationName>`) to the stdyDscr/distStmt/distrbtr element. If this setting is true, this will only be done when a Distributor is not already defined in the Dataset metadata. (Note that, since metadata export files are cached, they will have to be reexported (see :doc:`/admin/metadataexport`) before they incorporate a change in this setting.) 
+
+
+:DatasetChecksumValidationSizeLimit
++++++++++++++++++++++++++++++++++++
+
+Setting ``DatasetChecksumValidationSizeLimit`` to a threshold in bytes, disables the checksum validation while publishing for any dataset size greater than the limit.
+
+For example, if you want your Dataverse installation to skip validation for any data files larger than 2 GB while publishing, use this setting:
+
+``curl -X PUT -d 2000000000 http://localhost:8080/api/admin/settings/:DatasetChecksumValidationSizeLimit``
+
+When this option is used to disable the checksum validation while publishing, it's strongly recommended to perform periodic asynchronous checks via the integrity API
+
+:DataFileChecksumValidationSizeLimit
+++++++++++++++++++++++++++++++++++++
+
+Setting ``DataFileChecksumValidationSizeLimit`` to a threshold in bytes, disables the checksum validation while publishing for any datafiles greater than the limit.
+
+For example, if you want your Dataverse installation to skip validation for any data files larger than 2 GB while publishing, use this setting:
+
+``curl -X PUT -d 2000000000 http://localhost:8080/api/admin/settings/:DataFileChecksumValidationSizeLimit``
+
+When this option is used to disable the checksum validation, it's strongly recommended to perform periodic asynchronous checks via the integrity API
+
+The "Physical Files Validation in a Dataset" API will verify if the checksums in the database aren't right.
+Refer to :ref:`physical-files-validation-in-a-dataset` section of our :doc:`/api/native-api` documentation.
+
+The "Datafile Integrity" API can be used to add a checksum for any file that doesn't have one.  Refer to `/api/native-api#id20`
