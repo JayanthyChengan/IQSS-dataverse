@@ -27,6 +27,7 @@ import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.DataverseRole;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.RoleAssignee;
+import edu.harvard.iq.dataverse.authorization.users.ApiToken;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.User;
 import edu.harvard.iq.dataverse.batch.jobs.importer.ImportMode;
@@ -133,6 +134,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
@@ -2702,6 +2704,85 @@ public Response completeMPUpload(String partETagBody, @QueryParam("globalid") St
         );
 
         return addFileHelper.addFiles(jsonData, dataset, authUser);
+
+    }
+
+    @POST
+    @Path("{id}/addglobusFiles")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response addGlobusFilesToDataset(@PathParam("id") String datasetId,
+                                            @FormDataParam("jsonData") String jsonData,
+                                            @Context UriInfo uriInfo,
+                                            @Context HttpHeaders headers
+    ) throws IOException, ExecutionException, InterruptedException {
+
+        logger.info(" ====  (api addGlobusFilesToDataset) jsonData   ====== " + jsonData);
+
+        if (!systemConfig.isHTTPUpload()) {
+            return error(Response.Status.SERVICE_UNAVAILABLE, BundleUtil.getStringFromBundle("file.api.httpDisabled"));
+        }
+
+        // -------------------------------------
+        // (1) Get the user from the API key
+        // -------------------------------------
+        User authUser;
+        try {
+            authUser = findUserOrDie();
+        } catch (WrappedResponse ex) {
+            return error(Response.Status.FORBIDDEN, BundleUtil.getStringFromBundle("file.addreplace.error.auth")
+            );
+        }
+
+        // -------------------------------------
+        // (2) Get the Dataset Id
+        // -------------------------------------
+        Dataset dataset;
+
+        try {
+            dataset = findDatasetOrDie(datasetId);
+        } catch (WrappedResponse wr) {
+            return wr.getResponse();
+        }
+
+        //------------------------------------
+        // (2b) Make sure dataset does not have package file
+        // --------------------------------------
+
+        for (DatasetVersion dv : dataset.getVersions()) {
+            if (dv.isHasPackageFile()) {
+                return error(Response.Status.FORBIDDEN, BundleUtil.getStringFromBundle("file.api.alreadyHasPackageFile")
+                );
+            }
+        }
+
+
+        String lockInfoMessage = "Globus Upload API started ";
+        DatasetLock lock = datasetService.addDatasetLock(dataset.getId(), DatasetLock.Reason.EditInProgress,
+                ((AuthenticatedUser) authUser).getId(), lockInfoMessage);
+        if (lock != null) {
+            dataset.addLock(lock);
+        } else {
+            logger.log(Level.WARNING, "Failed to lock the dataset (dataset id={0})", dataset.getId());
+        }
+
+
+        ApiToken token = authSvc.findApiTokenByUser((AuthenticatedUser) authUser);
+
+        if(uriInfo != null) {
+            logger.info(" ====  (api uriInfo.getRequestUri()) jsonData   ====== " + uriInfo.getRequestUri().toString());
+        }
+
+
+        String requestUrl = headers.getRequestHeader("origin").get(0);
+
+        if(requestUrl.contains("localhost")){
+            requestUrl = "http://localhost:8080";
+        }
+
+        // Async Call
+        datasetService.globusUpload(jsonData, token, dataset, requestUrl, authUser);
+
+        return ok("Async call to Globus Upload started ");
 
     }
 }
