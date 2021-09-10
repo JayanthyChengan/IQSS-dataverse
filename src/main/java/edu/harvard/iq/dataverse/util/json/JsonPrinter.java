@@ -37,10 +37,11 @@ import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.User;
 import edu.harvard.iq.dataverse.branding.BrandingUtil;
 import edu.harvard.iq.dataverse.dataaccess.DataAccess;
+import edu.harvard.iq.dataverse.globus.FileDetailsHolder;
 import edu.harvard.iq.dataverse.privateurl.PrivateUrl;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import edu.harvard.iq.dataverse.util.DatasetFieldWalker;
-import edu.harvard.iq.dataverse.util.StringUtil;
+
 import static edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder.jsonObjectBuilder;
 import edu.harvard.iq.dataverse.workflow.Workflow;
 import edu.harvard.iq.dataverse.workflow.step.WorkflowStepData;
@@ -101,6 +102,14 @@ public class JsonPrinter {
                 .add("displayInfo", jsonObjectBuilder()
                         .add("Title", displayInfo.getTitle())
                         .add("email", displayInfo.getEmailAddress()));
+    }
+
+    public static JsonObjectBuilder json(FileDetailsHolder ds) {
+        return Json.createObjectBuilder().add(ds.getStorageID() ,
+                Json.createObjectBuilder()
+                        .add("id", ds.getStorageID() )
+                        .add("hash", ds.getHash())
+                        .add("mime",ds.getMime()));
     }
 
     public static JsonObjectBuilder json(AuthenticatedUser authenticatedUser) {

@@ -181,6 +181,8 @@ public class SettingsWrapper implements java.io.Serializable {
     public boolean isHTTPUpload(){
         return systemConfig.isHTTPUpload();
     }
+
+    public boolean isGlobusUpload() { return systemConfig.isGlobusUpload(); }
     
     public boolean isDataFilePIDSequentialDependent(){
         return systemConfig.isDataFilePIDSequentialDependent();

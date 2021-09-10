@@ -2785,4 +2785,47 @@ public Response completeMPUpload(String partETagBody, @QueryParam("globalid") St
         return ok("Async call to Globus Upload started ");
 
     }
+
+    @POST
+    @Path("{id}/deleteglobusRule")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response deleteglobusRule(@PathParam("id") String datasetId,@FormDataParam("jsonData") String jsonData
+    ) throws IOException, ExecutionException, InterruptedException {
+
+
+        logger.info(" ====  (api deleteglobusRule) jsonData   ====== " + jsonData);
+
+
+        if (!systemConfig.isHTTPUpload()) {
+            return error(Response.Status.SERVICE_UNAVAILABLE, BundleUtil.getStringFromBundle("file.api.httpDisabled"));
+        }
+
+        // -------------------------------------
+        // (1) Get the user from the API key
+        // -------------------------------------
+        User authUser;
+        try {
+            authUser = findUserOrDie();
+        } catch (WrappedResponse ex) {
+            return error(Response.Status.FORBIDDEN, BundleUtil.getStringFromBundle("file.addreplace.error.auth")
+            );
+        }
+
+        // -------------------------------------
+        // (2) Get the Dataset Id
+        // -------------------------------------
+        Dataset dataset;
+
+        try {
+            dataset = findDatasetOrDie(datasetId);
+        } catch (WrappedResponse wr) {
+            return wr.getResponse();
+        }
+
+        // Async Call
+        datasetService.globusDownload(jsonData, dataset, authUser);
+
+        return ok("Async call to Globus Download started");
+
+    }
 }

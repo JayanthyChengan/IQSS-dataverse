@@ -98,7 +98,8 @@ public class GlobusServiceBean implements Serializable{
             directory =  directory + "/";
         }
         logger.info("Start updating permissions." + " Directory is " + directory);
-        String globusEndpoint = settingsSvc.getValueForKey(SettingsServiceBean.Key.GlobusEndpoint, "");
+        String globusEndpoint = System.getProperty("dataverse.globus.endPoint");
+                //settingsSvc.getValueForKey(SettingsServiceBean.Key.GlobusEndpoint, "");
         ArrayList<String> rules = checkPermisions( clientTokenUser, directory, globusEndpoint, principalType, null);
         logger.info("Size of rules " + rules.size());
         int count = 0;
@@ -128,7 +129,8 @@ public class GlobusServiceBean implements Serializable{
         if(ruleId.length() > 0 ) {
             AccessToken clientTokenUser = getClientToken();
             globusLogger.info("Start deleting permissions.");
-            String globusEndpoint = settingsSvc.getValueForKey(SettingsServiceBean.Key.GlobusEndpoint, "");
+            String globusEndpoint = System.getProperty("dataverse.globus.endPoint");
+                    //settingsSvc.getValueForKey(SettingsServiceBean.Key.GlobusEndpoint, "");
 
             URL url = new URL("https://transfer.api.globusonline.org/v0.10/endpoint/" + globusEndpoint + "/access/" + ruleId);
             MakeRequestResponse result = makeRequest(url, "Bearer",
@@ -241,7 +243,8 @@ public class GlobusServiceBean implements Serializable{
     }
 
     public AccessToken getClientToken() throws MalformedURLException {
-        String basicGlobusToken = settingsSvc.getValueForKey(SettingsServiceBean.Key.BasicGlobusToken, "");
+        String basicGlobusToken = System.getProperty("dataverse.globus.basicToken");
+        //settingsSvc.getValueForKey(SettingsServiceBean.Key.BasicGlobusToken, "");
         URL url = new URL("https://auth.globus.org/v2/oauth2/token?scope=openid+email+profile+urn:globus:auth:scope:transfer.api.globus.org:all&grant_type=client_credentials");
 
         MakeRequestResponse result = makeRequest(url, "Basic",
@@ -414,8 +417,10 @@ public class GlobusServiceBean implements Serializable{
 
     public boolean giveGlobusPublicPermissions(String datasetId) throws UnsupportedEncodingException, MalformedURLException {
 
-        String globusEndpoint = settingsSvc.getValueForKey(SettingsServiceBean.Key.GlobusEndpoint, "");
-        String basicGlobusToken = settingsSvc.getValueForKey(SettingsServiceBean.Key.BasicGlobusToken, "");
+        String globusEndpoint = System.getProperty("dataverse.globus.endPoint");
+                //settingsSvc.getValueForKey(SettingsServiceBean.Key.GlobusEndpoint, "");
+        String basicGlobusToken = System.getProperty("dataverse.globus.basicToken");
+                //settingsSvc.getValueForKey(SettingsServiceBean.Key.BasicGlobusToken, "");
         if (globusEndpoint.equals("") || basicGlobusToken.equals("")) {
             return false;
         }
