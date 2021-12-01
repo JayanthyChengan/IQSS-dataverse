@@ -18,14 +18,14 @@
             <ui:param name="showMessagePanel" value="#{true}"/>
             <ui:param name="loginRedirectPage" value="dataverseuser.xhtml"/>
             <ui:define name="body">
-                <!-- 
-                 The following script is needed to protect a user's personal data 
+                <!--
+                 The following script is needed to protect a user's personal data
                 from being seen if they log out of their DV account and the next person who
                 sits at their computer hits the back button. (see ticket #3965)
                 -->
                 <script>
 
-                    //<![CDATA[                   
+                    //<![CDATA[
                     window.onpageshow = function(event) {
                         if (event.persisted) {
                             window.location.reload();
@@ -47,7 +47,7 @@
                 <h:form id="dataverseUserForm">
 
                     <p:focus context="dataverseUserForm"/>
-                    
+
                     <p:panel rendered="#{DataverseUserPage.editMode == 'FORGOT'}">
                         <h:outputText value="#{bundle['user.lostPasswdTip']}" />
                     </p:panel>
@@ -76,7 +76,7 @@
                                                             <a href="#{systemConfig.guidesBaseUrl}/#{systemConfig.guidesVersion}/user/index.html" title="#{dataverseServiceBean.findRootDataverse().name} #{bundle['header.guides.user']}" target="_blank">#{bundle['header.guides.user']}</a>
                                                         </o:param>
                                                         <o:param>
-                                                            <a href="https://demo.dataverse.org">#{bundle['notification.demoSite']}</a>
+                                                            <a href="https://demodv.scholarsportal.info">#{bundle['notification.demoSite']}</a>
                                                         </o:param>
                                                     </h:outputFormat>
                                                 </ui:fragment>
@@ -357,7 +357,7 @@
                                                         <f:param value="#{item.theObject.externalStatusLabel}"/>
                                                     </h:outputFormat>
                                                 </ui:fragment>
-                                                
+
 
                                             </ui:fragment>
                                             <h:outputText value="#{item.localeSendDate}" styleClass="text-muted small"/>
@@ -394,7 +394,7 @@
                                                 </p:commandLink>
                                             </li>
                                             <li>
-                                                <p:commandLink id="changePassword" rendered="#{DataverseUserPage.passwordEditable}" 
+                                                <p:commandLink id="changePassword" rendered="#{DataverseUserPage.passwordEditable}"
                                                                actionListener="#{DataverseUserPage.changePassword}" update="@form" oncomplete="javascript:bind_bsui_components();">
                                                     <h:outputText value="#{bundle.passwd}" />
                                                 </p:commandLink>
@@ -475,7 +475,7 @@
                                                     </span>
                                                 </p>
                                                 &#160;
-                                                <p:commandLink rendered="#{DataverseUserPage.showVerifyEmailButton()}" styleClass="btn btn-default" 
+                                                <p:commandLink rendered="#{DataverseUserPage.showVerifyEmailButton()}" styleClass="btn btn-default"
                                                                 id="verifyEmailButton"
                                                                 action="#{DataverseUserPage.sendConfirmEmail()}"
                                                                 update="@([id$=verifyEmailButton]), :messagePanel"
@@ -503,7 +503,7 @@
                                                 #{bundle.affiliation}
                                             </th>
                                             <td>
-                                                #{DataverseUserPage.currentUser.affiliation}
+                                                #{DataverseUserPage.currentUser.localizedAffiliation}
                                             </td>
                                         </tr>
                                         <!-- Position (not populated for Shibboleth users) -->
@@ -593,14 +593,73 @@
                                 </p>
                             </ui:fragment>
                             <div class="form-horizontal">
+                                <div class="form-group" jsf:rendered="#{DataverseUserPage.editMode == 'CREATE'}">
+                                    <!-- Email -->
+
+                                    <h:outputLabel value="#{bundle['bundle.email']}" for="email" class="col-sm-3 control-label">
+                                        <span class="glyphicon glyphicon-asterisk text-danger"/>
+                                        <span class="glyphicon glyphicon-question-sign tooltip-icon"
+                                              data-toggle="tooltip" data-placement="auto right" data-original-title="#{bundle['user.email.tip']}"></span>
+                                    </h:outputLabel>
+
+                                    <div class="col-sm-4">
+                                        <p:inputText id="email" styleClass="form-control"
+                                                     validator="#{DataverseUserPage.validateUserEmail}"
+                                                     value="#{DataverseUserPage.userDisplayInfo.emailAddress}"
+                                                     binding="#{DataverseUserPage.emailField}">
+                                            <p:ajax event="blur" update="affiliation,emailMessage"></p:ajax>
+                                        </p:inputText>
+                                        <p:message id="emailMessage" for="email" display="text" style="color:darkred" escape="false"/>
+                                    </div>
+                                </div>
+                                <div class="form-group" jsf:rendered="#{DataverseUserPage.editMode == 'EDIT'}">
+                                    <!-- Email -->
+                                    <h:outputLabel value="#{bundle['bundle.email']}" for="email" class="col-sm-3 control-label">
+                                        <span class="glyphicon glyphicon-asterisk text-danger"/>
+                                        <span class="glyphicon glyphicon-question-sign tooltip-icon"
+                                              data-toggle="tooltip" data-placement="auto right" data-original-title="#{bundle['user.email.tip']}"></span>
+                                    </h:outputLabel>
+                                    <div class="col-sm-4">
+                                        <p:inputText styleClass="form-control" value="#{DataverseUserPage.userDisplayInfo.emailAddress}" disabled="true"/>
+                                    </div>
+                                </div>
+                                <div class="form-group" jsf:rendered="#{DataverseUserPage.editMode == 'CREATE' or (DataverseUserPage.editMode == 'EDIT' and !DataverseUserPage.currentUser.superuser)}">
+                                    <!-- Affiliation -->
+
+                                    <h:outputLabel value="#{bundle['bundle.affiliation']}" for="affiliation" class="col-sm-3 control-label">
+                                        <span class="glyphicon glyphicon-asterisk text-danger"/>
+                                        <span class="glyphicon glyphicon-question-sign tooltip-icon"
+                                              data-toggle="tooltip" data-placement="auto right" data-original-title="#{bundle['user.affiliation.tip']}"></span>
+                                    </h:outputLabel>
+                                    <div class="col-sm-4">
+                                        <p:inputText id="affiliation" styleClass="form-control" value="#{DataverseUserPage.userDisplayInfo.affiliation}" disabled="true"/>
+                                        <p:message for="affiliation" display="text" />
+                                    </div>
+                                </div>
+                                <div class="form-group" jsf:rendered="#{DataverseUserPage.editMode == 'EDIT' and DataverseUserPage.currentUser.superuser}">
+                                    <!-- Affiliation -->
+                                    <h:outputLabel value="#{bundle['bundle.affiliation']}" for="affiliation" class="col-sm-3 control-label">
+                                        <span data-toggle="tooltip" data-placement="auto right" class="tooltiplabel text-info" data-original-title="#{bundle['user.affiliation.tip']}">
+                                        <span class="glyphicon glyphicon-asterisk text-danger"/>
+                                        </span>
+                                    </h:outputLabel>
+                                    <div class="form-group">
+                                        <div class="col-sm-4">
+                                            <p:selectOneMenu id="affiliationList" value="#{DataverseUserPage.userDisplayInfo.affiliation}">
+                                                <f:selectItems value="#{DataverseUserPage.affiliationList}" />
+                                            </p:selectOneMenu>
+                                            <p:message for="affiliation" display="text" />
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="form-group" jsf:rendered="#{DataverseUserPage.editMode == 'CREATE' or DataverseUserPage.editMode == 'EDIT'}">
-                                    <!-- Username -->                                   
+                                    <!-- Username -->
                                     <h:outputLabel value="#{bundle['user.username']}" for="userName" class="col-sm-3 control-label">
                                         <span class="glyphicon glyphicon-asterisk text-danger"/>
                                         <span class="glyphicon glyphicon-question-sign tooltip-icon"
                                               data-toggle="tooltip" data-placement="auto right" data-original-title="#{bundle['user.username.illegal.tip']}"></span>
-                                    </h:outputLabel> 
-                                                                       
+                                    </h:outputLabel>
+
                                     <div class="col-sm-9">
                                         <div class="help-block">
                                             <h:outputText value="#{bundle['user.username.valid']}" escape="false">
@@ -634,7 +693,7 @@
                                     <span class="glyphicon glyphicon-asterisk text-danger"></span>
                                     <span class="glyphicon glyphicon-question-sign tooltip-icon"
                                           data-toggle="tooltip" data-placement="auto right" data-original-title="#{bundle['user.passwd.illegal.tip']}"></span>
-                                </h:outputLabel>      
+                                </h:outputLabel>
                                     <div class="col-sm-9">
                                         <div class="help-block">
                                             <h:outputFormat value="#{bundle['user.updatePassword.password']}" escape="false">
@@ -659,7 +718,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group" jsf:rendered="#{DataverseUserPage.editMode == 'CREATE' or DataverseUserPage.editMode == 'EDIT'}">
-                                <!-- First Name -->                                       
+                                <!-- First Name -->
                                 <h:outputLabel value="#{bundle['user.firstName']}" for="firstName" class="col-sm-3 control-label" > <span class="glyphicon glyphicon-asterisk text-danger"/>
                                     <span class="glyphicon glyphicon-question-sign tooltip-icon"
                                           data-toggle="tooltip" data-placement="auto right" data-original-title="#{bundle['user.firstName.tip']}"></span>
@@ -680,26 +739,13 @@
                                         <p:message for="lastName" display="text" />
                                     </div>
                                 </div>
-                                <div class="form-group" jsf:rendered="#{DataverseUserPage.editMode == 'CREATE' or DataverseUserPage.editMode == 'EDIT'}">
-                                    <!-- Email -->
-                                    <h:outputLabel value="#{bundle['email']}" for="email" class="col-sm-3 control-label">   <span class="glyphicon glyphicon-asterisk text-danger"/>
-                                        <span class="glyphicon glyphicon-question-sign tooltip-icon"
-                                              data-toggle="tooltip" data-placement="auto right" data-original-title="#{bundle['user.email.tip']}"></span>
-                                    </h:outputLabel>
-                                    <div class="col-sm-4">
-                                        <p:inputText id="email" styleClass="form-control"
-                                                     validator="#{DataverseUserPage.validateUserEmail}"
-                                                     value="#{DataverseUserPage.userDisplayInfo.emailAddress}" />
-                                        <p:message for="email" display="text" />
-                                    </div>
-                                </div>
                                 <!--FIXME: refactor to remove need for EDIT? userAuthProvider is null on CREATE-->
                                 <div class="form-group" jsf:rendered="#{DataverseUserPage.editMode == 'EDIT' and DataverseUserPage.userAuthProvider.displayIdentifier}">
                                     <!-- ORCID iD, for example -->
-                                    <h:outputLabel value="#{DataverseUserPage.userAuthProvider.persistentIdName}" for="userPersistentId" class="col-sm-3 control-label">                     
+                                    <h:outputLabel value="#{DataverseUserPage.userAuthProvider.persistentIdName}" for="userPersistentId" class="col-sm-3 control-label">
                                         <span class="glyphicon glyphicon-question-sign tooltip-icon"
                                               data-toggle="tooltip" data-placement="auto right" data-original-title="#{DataverseUserPage.userAuthProvider.persistentIdDescription}"></span>
-                                    </h:outputLabel>     
+                                    </h:outputLabel>
                                     <div class="col-sm-4">
                                         <p class="form-control-static">
                                             <h:graphicImage value="#{DataverseUserPage.userAuthProvider.logo}" height="16" width="16" alt="#{of:format1(bundle['alt.logo'], DataverseUserPage.userAuthProvider.persistentIdName)}"/>&#160;
@@ -707,17 +753,6 @@
                                                 <h:outputText value="#{DataverseUserPage.userAuthProvider.persistentIdUrlPrefix}#{DataverseUserPage.currentUser.authenticatedUserLookup.persistentUserId}"/>
                                             </h:outputLink>
                                         </p>
-                                    </div>
-                                </div>
-                                <div class="form-group" jsf:rendered="#{DataverseUserPage.editMode == 'CREATE' or DataverseUserPage.editMode == 'EDIT'}">
-                                    <!-- Affiliation -->
-                                    <h:outputLabel value="#{bundle.affiliation}" for="affiliation" class="col-sm-3 control-label">
-                                        <span class="glyphicon glyphicon-question-sign tooltip-icon"
-                                              data-toggle="tooltip" data-placement="auto right" data-original-title="#{bundle['user.affiliation.tip']}"></span>
-                                    </h:outputLabel>
-                                    <div class="col-sm-4">
-                                        <p:inputText id="affiliation" styleClass="form-control" value="#{DataverseUserPage.userDisplayInfo.affiliation}" />
-                                        <p:message for="affiliation" display="text" />
                                     </div>
                                 </div>
                                 <div class="form-group" jsf:rendered="#{DataverseUserPage.editMode == 'CREATE' or DataverseUserPage.editMode == 'EDIT'}">
@@ -751,27 +786,27 @@
                     </p:tabView>
                         <p:dialog id="tokenExists" styleClass="smallPopUp"
                                   header="#{bundle['account.emailvalidation.header']}" widgetVar="tokenExists" modal="true">
-                            
+
                              <h:outputFormat value="#{bundle['account.emailvalidation.token.exists']}" escape="false">
                                 <o:param>#{DataverseUserPage.currentUser.email}</o:param>
                             </h:outputFormat>
-                            
-                            
+
+
                             <div class="button-block">
                                 <button class="btn btn-default" onclick="PF('tokenExists').hide();" type="button">
                                     #{bundle.close}
                                 </button>
                             </div>
-                        </p:dialog> 
+                        </p:dialog>
                 </h:form>
                 <script>
-                    //<![CDATA[        
+                    //<![CDATA[
                         function testHasEmailToken(hasActiveVerificationToken) {
-                            if (hasActiveVerificationToken) {                               
+                            if (hasActiveVerificationToken) {
                                 PF("tokenExists").show();
                             } else {
                                 return true;
-                            }                        
+                            }
                         }
                     //]]>
                 </script>

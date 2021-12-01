@@ -42,7 +42,7 @@
                             <div class="row">
                                 <div id="file-title-block" class="col-xs-12 margin-bottom-half">
                                     <span class="file-title-label">#{FilePage.fileMetadata.label}</span>
-                                    
+
                                     <!-- FILE LEVEL MSGs -->
                                     <div class="bg-warning text-warning text-center margin-bottom-half" jsf:rendered="#{FilePage.fileMetadata.dataFile.ingestProblem and FilePage.canUpdateDataset()}">
                                         <!-- Ingest failed -->
@@ -60,11 +60,11 @@
                                     </p>
 
                                     <div id="title-label-block" class="margin-top-half">
-                                    
+
                                         <!-- Restricted File Icon -->
                                         <span class="glyphicon glyphicon-lock text-danger" title="#{bundle['restricted']}" data-toggle="tooltip" jsf:rendered="#{FilePage.fileMetadata.restricted and !(fileDownloadHelper.canDownloadFile(FilePage.fileMetadata))}"/>
                                         <span class="icon-unlock text-success" title="#{bundle['restrictedaccess']}" data-toggle="tooltip" jsf:rendered="#{FilePage.fileMetadata.restricted  and fileDownloadHelper.canDownloadFile(FilePage.fileMetadata) }"/>
-                                        
+
                                         <!-- DATASET Publication Status -->
                                         <h:outputText value="#{bundle['dataset.versionUI.draft']}" styleClass="label label-primary" rendered="#{FilePage.fileMetadata.datasetVersion.draft}"/>
                                         <h:outputText value="#{bundle['embargoed']}" styleClass="label label-primary" rendered="#{dataFileServiceBean.isActivelyEmbargoed(FilePage.fileMetadata)}"/>
@@ -219,7 +219,7 @@
                                                     <p:commandLink styleClass="btn btn-default btn-access btn-edit" onclick="PF('fileAlreadyDeletedPrevious').show()"
                                                                    title="#{bundle['file.editBtn']}">
                                                         #{bundle['file.editBtn']}
-                                                    </p:commandLink>                                                   
+                                                    </p:commandLink>
                                                 </div>
                                                 <div class="btn-group" jsf:rendered="#{dataverseSession.user.authenticated
                                                                          and permissionsWrapper.canIssueUpdateDatasetCommand(FilePage.fileMetadata.datasetVersion.dataset)
@@ -264,7 +264,7 @@
                                     <!-- END: ActionButtonBlock -->
                                 </div>
 
-                                <div style="clear:right;" class="col-xs-12 col-sm-12 col-md-4 col-lg-3 pull-right margin-bottom" 
+                                <div style="clear:right;" class="col-xs-12 col-sm-12 col-md-4 col-lg-3 pull-right margin-bottom"
                                      jsf:rendered="#{!(widgetWrapper.widgetView or FilePage.fileMetadata.dataFile.filePackage or FilePage.fileMetadata.datasetVersion.deaccessioned)}">
                                     <!-- Metrics -->
                                     <div id="metrics-block">
@@ -371,7 +371,7 @@
                                     <!-- END: Preview Button Group -->
                                     <div class="btn-group" jsf:rendered="#{FilePage.toolsWithPreviews.size() > 0 and fileDownloadHelper.canDownloadFile(FilePage.fileMetadata)}">
                                         <!-- Modular/Configured Explore Tool -->
-                                        <h:commandLink rendered="#{!downloadPopupRequired}" 
+                                        <h:commandLink rendered="#{!downloadPopupRequired}"
                                                          type="submit"
                                                          styleClass="btn btn-default #{(FilePage.fileMetadata.dataFile.ingestInProgress) ? 'disabled' : ''}"
                                                          disabled="#{(FilePage.fileMetadata.dataFile.ingestInProgress or lockedFromDownload) ? 'disabled' : ''}"
@@ -459,7 +459,7 @@
                                                                 <div id="border-block" style="border:0;">
                                                                     <div id="preview-square">
                                                                         <span class="icon-#{dataFileServiceBean.getFileThumbnailClass(FilePage.fileMetadata.dataFile)} text-muted" jsf:rendered="#{!FilePage.isThumbnailAvailable(FilePage.fileMetadata)}"/>
-                                                                        <p:graphicImage styleClass="img-responsive" value="/api/access/datafile/#{FilePage.fileId}?imageThumb=400" 
+                                                                        <p:graphicImage styleClass="img-responsive" value="/api/access/datafile/#{FilePage.fileId}?imageThumb=400"
                                                                                         alt="#{FilePage.fileMetadata.label}" rendered="#{FilePage.isThumbnailAvailable(FilePage.fileMetadata)}"/>
                                                                     </div>
                                                                 </div>
@@ -599,8 +599,8 @@
                         <ui:param name="deleteFileAction" value="deleteFile"/>
                         <ui:param name="saveEmbargoAction" value="saveEmbargo"/>
                         <ui:param name="updateElements" value=":fileForm:embargoInputs"/>
-                        
-                    </ui:include> 
+
+                    </ui:include>
                     <p:dialog id="shareDialog" header="#{bundle['file.share.title']}" widgetVar="shareDialog" modal="true" rendered="#{!FilePage.fileMetadata.datasetVersion.deaccessioned}">
                         <p class="help-block">#{bundle['file.share.tip']}</p>
                         <div id="sharrre-widget" data-text="#{bundle['file.share.text']}" data-url="#{systemConfig.dataverseSiteUrl}/file.xhtml?#{empty FilePage.fileMetadata.dataFile.globalIdString ? 'fileId' : 'persistentId'}=#{empty FilePage.fileMetadata.dataFile.globalIdString ? FilePage.fileMetadata.dataFile.id : FilePage.fileMetadata.dataFile.globalIdString}&amp;version=#{FilePage.fileMetadata.datasetVersion.friendlyVersionNumber}"></div>
@@ -609,7 +609,7 @@
                                 #{bundle.close}
                             </button>
                         </div>
-                    </p:dialog>                                                              
+                    </p:dialog>
                     <p:dialog id="downloadPopup" styleClass="largePopUp" header="#{bundle['file.downloadDialog.header']}" widgetVar="downloadPopup" modal="true">
                          <ui:include src="file-download-popup-fragment.xhtml">
                             <ui:param name="popupContext" value="downloadFile"/>
@@ -630,7 +630,7 @@
                             <ui:param name="fileDownloadService" value="#{FilePage.fileDownloadService}"/>
                             <ui:param name="lockedFromDownload" value="#{FilePage.lockedFromDownload}"/>
                         </ui:include>
-                    </p:dialog>                  
+                    </p:dialog>
                     <p:dialog id="requestAccessPopup" styleClass="largePopUp" header="#{bundle['file.requestAccess']}" widgetVar="requestAccessPopup" modal="true">
                         <o:importFunctions type="edu.harvard.iq.dataverse.util.MarkupChecker" />
                         <ui:include src="file-request-access-popup-fragment.xhtml">
@@ -638,7 +638,7 @@
                             <ui:param name="someActivelyEmbargoedFiles" value="#{FilePage.cantRequestDueToEmbargo}"/>
                             <ui:param name="fileDownloadService" value="#{FilePage.fileDownloadService}"/>
                         </ui:include>
-                    </p:dialog>                    
+                    </p:dialog>
                     <p:dialog id="mapDataDialog" header="#{bundle['file.mapData.unpublished.header']}" widgetVar="mapDataDialog" modal="true">
                         <p class="help-block">
                             <span class="text-danger"><span class="glyphicon glyphicon-exclamation-sign"/> #{bundle['file.mapData.unpublished.message']}</span>
@@ -648,7 +648,7 @@
                                 #{bundle.close}
                             </button>
                         </div>
-                    </p:dialog>                    
+                    </p:dialog>
                     <ui:include rendered="#{systemConfig.provCollectionEnabled}" src="provenance-popups-fragment.xhtml">
                         <ui:param name="saveInPopup" value="true"/>
                     </ui:include>
@@ -667,7 +667,7 @@
                                 #{bundle.close}
                             </button>
                         </div>
-                    </p:dialog>                 
+                    </p:dialog>
                     <p:dialog id="computeAccessDenied" styleClass="smallPopUp" header="#{bundle['dataset.compute.computeBtn']}" widgetVar="computeAccessDeniedPopup" modal="true">
                         <p class="text-danger"><span class="glyphicon glyphicon-exclamation-sign"/> #{bundle['file.compute.fileAccessDenied']}</p>
                         <div class="button-block">

@@ -1100,7 +1100,7 @@ public class DatasetPage implements java.io.Serializable {
         }
         return true;
     }
-    
+
     Boolean canDownloadFiles = null;
 
     //caching can download files to limit trips to File Download Helper
@@ -2131,6 +2131,19 @@ public class DatasetPage implements java.io.Serializable {
             JH.addMessage(FacesMessage.SEVERITY_WARN, BundleUtil.getStringFromBundle("dataset.locked.pidNotReserved.message"),
                     BundleUtil.getStringFromBundle("dataset.locked.pidNotReserved.message.details"));
         }
+
+        configureTools = externalToolService.findFileToolsByType(ExternalTool.Type.CONFIGURE);
+        for (ExternalTool configureTool : configureTools) {
+            if (configureTool.getDisplayName().equals(BundleUtil.getStringFromDefaultBundleEng("externaltools.dct.displayname"))) {
+                configureTool.setDisplayNameLang(BundleUtil.getStringFromBundle("externaltools.dct.displayname"));
+            } else {
+                configureTool.setDisplayNameLang(configureTool.getDisplayName());
+            }
+        }
+        exploreTools = externalToolService.findFileToolsByType(ExternalTool.Type.EXPLORE);
+        datasetExploreTools = externalToolService.findDatasetToolsByType(ExternalTool.Type.EXPLORE);
+        rowsPerPage = 10;
+
 
     }
 

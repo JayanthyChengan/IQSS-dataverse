@@ -156,7 +156,7 @@ public class Admin extends AbstractApiBean {
         ExplicitGroupServiceBean explicitGroupService;
         @EJB
         BannerMessageServiceBean bannerMessageService;
-        
+
 
 	// Make the session available
 	@Inject
@@ -354,7 +354,7 @@ public class Admin extends AbstractApiBean {
         }
         return error(Response.Status.BAD_REQUEST, "User " + identifier + " not found.");
     }
-    
+
     @DELETE
     @Path("authenticatedUsers/id/{id}/")
     public Response deleteAuthenticatedUserById(@PathParam("id") Long id) {
@@ -366,21 +366,21 @@ public class Admin extends AbstractApiBean {
     }
 
     private Response deleteAuthenticatedUser(AuthenticatedUser au) {
-        
+
         //getDeleteUserErrorMessages does all of the tests to see
-        //if the user is 'deletable' if it returns an empty string the user 
+        //if the user is 'deletable' if it returns an empty string the user
         //can be safely deleted.
-        
+
         String errorMessages = authSvc.getDeleteUserErrorMessages(au);
-        
+
         if (!errorMessages.isEmpty()) {
             return badRequest(errorMessages);
         }
-        
+
         //if the user is deletable we will delete access requests and group membership
         // many-to-many relationships that couldn't be cascade deleted
         authSvc.removeAuthentictedUserItems(au);
-        
+
         authSvc.deleteAuthenticatedUser(au.getId());
         return ok("AuthenticatedUser " + au.getIdentifier() + " deleted.");
     }
@@ -928,7 +928,7 @@ public class Admin extends AbstractApiBean {
 			return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}
-        
+
     @DELETE
     @Path("roles/{id}")
     public Response deleteRole(@PathParam("id") String id) {
@@ -1099,16 +1099,16 @@ public class Admin extends AbstractApiBean {
         }
         return ok(msg);
     }
-    
-    // This API does the same thing as /validateDataFileHashValue/{fileId}, 
+
+    // This API does the same thing as /validateDataFileHashValue/{fileId},
     // but for all the files in the dataset, with streaming output.
     @GET
     @Path("validate/dataset/files/{id}")
     @Produces({"application/json"})
     public Response validateDatasetDatafiles(@PathParam("id") String id) {
-        
-        // Streaming output: the API will start producing 
-        // the output right away, as it goes through the list 
+
+        // Streaming output: the API will start producing
+        // the output right away, as it goes through the list
         // of the datafiles in the dataset.
         // The streaming mechanism is modeled after validate/datasets API.
         StreamingOutput stream = new StreamingOutput() {
@@ -1117,28 +1117,28 @@ public class Admin extends AbstractApiBean {
             public void write(OutputStream os) throws IOException,
                     WebApplicationException {
                 Dataset dataset;
-        
+
                 try {
                     dataset = findDatasetOrDie(id);
                 } catch (Exception ex) {
                     throw new IOException(ex.getMessage());
                 }
-                
+
                 os.write("{\"dataFiles\": [\n".getBytes());
-                
+
                 boolean wroteObject = false;
                 for (DataFile dataFile : dataset.getFiles()) {
-                    // Potentially, there's a godzillion datasets in this Dataverse. 
-                    // This is why we go through the list of ids here, and instantiate 
-                    // only one dataset at a time. 
+                    // Potentially, there's a godzillion datasets in this Dataverse.
+                    // This is why we go through the list of ids here, and instantiate
+                    // only one dataset at a time.
                     boolean success = false;
                     boolean constraintViolationDetected = false;
-                     
+
                     JsonObjectBuilder output = Json.createObjectBuilder();
                     output.add("datafileId", dataFile.getId());
                     output.add("storageIdentifier", dataFile.getStorageIdentifier());
 
-                    
+
                     try {
                         FileUtil.validateDataFileChecksum(dataFile);
                         success = true;
@@ -1146,27 +1146,27 @@ public class Admin extends AbstractApiBean {
                         output.add("status", "invalid");
                         output.add("errorMessage", ex.getMessage());
                     }
-                    
+
                     if (success) {
                         output.add("status", "valid");
-                    } 
-                    
+                    }
+
                     // write it out:
-                    
+
                     if (wroteObject) {
                         os.write(",\n".getBytes());
                     }
 
                     os.write(output.build().toString().getBytes("UTF8"));
-                    
+
                     if (!wroteObject) {
                         wroteObject = true;
                     }
                 }
-                
+
                 os.write("\n]\n}\n".getBytes());
             }
-            
+
         };
         return Response.ok(stream).build();
     }
@@ -1819,7 +1819,7 @@ public class Admin extends AbstractApiBean {
         return error(Response.Status.BAD_REQUEST,
                 "InheritParentRoleAssignments does not list any roles on this instance");
     }
-    
+
     @GET
     @Path("/dataverse/{alias}/storageDriver")
     public Response getStorageDriver(@PathParam("alias") String alias) throws WrappedResponse {
@@ -1838,7 +1838,7 @@ public class Admin extends AbstractApiBean {
     	//Note that this returns what's set directly on this dataverse. If null/DataAccess.UNDEFINED_STORAGE_DRIVER_IDENTIFIER, the user would have to recurse the chain of parents to find the effective storageDriver
     	return ok(dataverse.getStorageDriverId());
     }
-    
+
     @PUT
     @Path("/dataverse/{alias}/storageDriver")
     public Response setStorageDriver(@PathParam("alias") String alias, String label) throws WrappedResponse {
@@ -1882,7 +1882,7 @@ public class Admin extends AbstractApiBean {
     	dataverse.setStorageDriverId("");
     	return ok("Storage reset to default: " + DataAccess.DEFAULT_STORAGE_DRIVER_IDENTIFIER);
     }
-    
+
     @GET
     @Path("/dataverse/storageDrivers")
     public Response listStorageDrivers() throws WrappedResponse {
@@ -1898,7 +1898,7 @@ public class Admin extends AbstractApiBean {
     	DataAccess.getStorageDriverLabels().entrySet().forEach(s -> bld.add(s.getKey(), s.getValue()));
 		return ok(bld);
     }
-    
+
     @GET
     @Path("/dataverse/{alias}/curationLabelSet")
     public Response getCurationLabelSet(@PathParam("alias") String alias) throws WrappedResponse {
@@ -1989,7 +1989,7 @@ public class Admin extends AbstractApiBean {
         });
         return ok(bld);
     }
-    
+
     @POST
     @Path("/bannerMessage")
     public Response addBannerMessage(JsonObject jsonObject) throws WrappedResponse {
@@ -2025,21 +2025,21 @@ public class Admin extends AbstractApiBean {
         }
 
     }
-    
+
     @DELETE
     @Path("/bannerMessage/{id}")
     public Response deleteBannerMessage(@PathParam("id") Long id) throws WrappedResponse {
- 
+
         BannerMessage message = em.find(BannerMessage.class, id);
         if (message == null){
             return error(Response.Status.NOT_FOUND, "Message id = "  + id + " not found.");
         }
         bannerMessageService.deleteBannerMessage(id);
-        
+
         return ok("Message id =  " + id + " deleted.");
 
     }
-    
+
     @PUT
     @Path("/bannerMessage/{id}/deactivate")
     public Response deactivateBannerMessage(@PathParam("id") Long id) throws WrappedResponse {
@@ -2048,11 +2048,11 @@ public class Admin extends AbstractApiBean {
             return error(Response.Status.NOT_FOUND, "Message id = "  + id + " not found.");
         }
         bannerMessageService.deactivateBannerMessage(id);
-        
+
         return ok("Message id =  " + id + " deactivated.");
 
     }
-    
+
     @GET
     @Path("/bannerMessage")
     public Response getBannerMessages(@PathParam("id") Long id) throws WrappedResponse {
@@ -2062,5 +2062,5 @@ public class Admin extends AbstractApiBean {
                 .collect(toJsonArray()));
 
     }
-    
+
 }

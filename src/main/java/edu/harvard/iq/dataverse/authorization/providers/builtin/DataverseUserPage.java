@@ -19,6 +19,7 @@ import edu.harvard.iq.dataverse.UserNameValidator;
 import edu.harvard.iq.dataverse.UserNotification;
 import edu.harvard.iq.dataverse.UserNotificationServiceBean;
 import edu.harvard.iq.dataverse.UserServiceBean;
+import edu.harvard.iq.dataverse.SendFeedbackDialog;
 import edu.harvard.iq.dataverse.authorization.AuthUtil;
 import edu.harvard.iq.dataverse.authorization.AuthenticatedUserDisplayInfo;
 import edu.harvard.iq.dataverse.authorization.AuthenticationProvider;
@@ -26,11 +27,16 @@ import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.UserRecordIdentifier;
 import edu.harvard.iq.dataverse.authorization.groups.Group;
 import edu.harvard.iq.dataverse.authorization.groups.GroupServiceBean;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationGroup;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationGroupServiceBean;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationServiceBean;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
+import edu.harvard.iq.dataverse.confirmemail.ConfirmEmailData;
 import edu.harvard.iq.dataverse.confirmemail.ConfirmEmailException;
 import edu.harvard.iq.dataverse.confirmemail.ConfirmEmailServiceBean;
 import edu.harvard.iq.dataverse.confirmemail.ConfirmEmailUtil;
 import edu.harvard.iq.dataverse.mydata.MyDataPage;
+import edu.harvard.iq.dataverse.passwordreset.PasswordValidator;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
@@ -60,6 +66,15 @@ import javax.inject.Named;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.validator.constraints.NotBlank;
 import org.primefaces.event.TabChangeEvent;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.sql.Timestamp;
+import java.text.Normalizer;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
 
 /**
  *
@@ -71,7 +86,7 @@ public class DataverseUserPage implements java.io.Serializable {
     private static final Logger logger = Logger.getLogger(DataverseUserPage.class.getCanonicalName());
 
     public enum EditMode {
-        CREATE, EDIT, CHANGE_PASSWORD, FORGOT
+        CREATE, EDIT, CHANGE_PASSWORD, FORGOT, SUPPORT
     };
 
     @Inject
@@ -111,6 +126,12 @@ public class DataverseUserPage implements java.io.Serializable {
 
     @EJB
     AuthenticationServiceBean authSvc;
+    @Inject
+    AffiliationServiceBean affiliationServiceBean;
+    @Inject
+    AffiliationGroupServiceBean affiliationGroupServiceBean;
+    @Inject
+    SendFeedbackDialog sendFeedbackDialog;
 
     private AuthenticatedUser currentUser;
     private BuiltinUser builtinUser;    
@@ -118,6 +139,7 @@ public class DataverseUserPage implements java.io.Serializable {
     private transient AuthenticationProvider userAuthProvider;
     private EditMode editMode;
     private String redirectPage = "dataverse.xhtml";
+    private List<String> affiliationList = new ArrayList<String>();
 
     @NotBlank(message = "{password.retype}")
     private String inputPassword;
@@ -129,7 +151,7 @@ public class DataverseUserPage implements java.io.Serializable {
     private int activeIndex;
     private String selectTab = "dataRelatedToMe";
     UIInput usernameField;
-
+    UIInput emailField;
     
     private String username;
     boolean nonLocalLoginEnabled;
@@ -157,8 +179,12 @@ public class DataverseUserPage implements java.io.Serializable {
             }
         }
 
-        if (session.getUser(true).isAuthenticated()) {
-            setCurrentUser((AuthenticatedUser) session.getUser());
+        if ( session.getUser(true).isAuthenticated() ) {
+            AuthenticatedUser user = (AuthenticatedUser) session.getUser();
+            String userAffiliation = user.getAffiliation();
+            String affl = affiliationServiceBean.getLocalizedAffiliation(userAffiliation);
+            user.setLocalizedAffiliation(affl);
+            setCurrentUser(user);
             userAuthProvider = authenticationService.lookupProvider(currentUser);
             notificationsList = userNotificationService.findByUser(currentUser.getId());
             
@@ -202,6 +228,10 @@ public class DataverseUserPage implements java.io.Serializable {
         editMode = EditMode.FORGOT;
     }
 
+    public void supportMode( ) {
+        editMode = EditMode.SUPPORT;
+    }
+
     public void validateUserName(FacesContext context, UIComponent toValidate, Object value) {
         String userName = (String) value;
         boolean userNameFound = authenticationService.identifierExists(userName);
@@ -242,7 +272,7 @@ public class DataverseUserPage implements java.io.Serializable {
         } else {
 
             // In edit mode...
-            // if there's a match on edit make sure that the email belongs to the 
+            // if there's a match on edit make sure that the email belongs to the
             // user doing the editing by checking ids
             if ( aUser!=null && ! aUser.getId().equals(currentUser.getId()) ){
                 userEmailFound = true;
@@ -253,6 +283,17 @@ public class DataverseUserPage implements java.io.Serializable {
 
             FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("user.email.taken"), null);
             context.addMessage(toValidate.getClientId(context), message);
+            return;
+        } else {
+            AffiliationGroup group = affiliationGroupServiceBean.find(userEmail);
+            if (group == null) {
+                ((UIInput) toValidate).setValid(true);
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_WARN, BundleUtil.getStringFromBundle("user.email.domain.invalid"), null);
+                context.addMessage(toValidate.getClientId(context), message);
+                logger.info("Non-affiliated email domain. " + userEmail);
+            }
+            String affiliation = (group == null) ? "OTHER" : group.getDisplayName();
+            userDisplayInfo.setAffiliation(affiliation);
         }
     }
 
@@ -279,12 +320,12 @@ public class DataverseUserPage implements java.io.Serializable {
 
     public String save() {
         boolean passwordChanged = false;
-        
+
         //First reget user to make sure they weren't deactivated or deleted
         if (session.getUser().isAuthenticated() && !session.getUser(true).isAuthenticated()) {
             return "dataverse.xhtml?alias=" + dataverseService.findRootDataverse().getAlias() + "&faces-redirect=true";
         }
-        
+
         if (editMode == EditMode.CHANGE_PASSWORD) {
             final AuthenticationProvider prv = getUserAuthProvider();
             if (prv.isPasswordUpdateAllowed()) {
@@ -309,7 +350,12 @@ public class DataverseUserPage implements java.io.Serializable {
             builtinUser.setUserName( getUsername() );
             builtinUser.updateEncryptedPassword(PasswordEncryption.get().encrypt(inputPassword),
                                                 PasswordEncryption.getLatestVersionNumber());
-            
+
+            String userEmail = userDisplayInfo.getEmailAddress();
+            AffiliationGroup group = affiliationGroupServiceBean.find(userEmail);
+            String affiliation = (group == null) ? "OTHER" : group.getDisplayName();
+            userDisplayInfo.setAffiliation(affiliation);
+
             AuthenticatedUser au = authenticationService.createAuthenticatedUser(
                     new UserRecordIdentifier(BuiltinAuthenticationProvider.PROVIDER_ID, builtinUser.getUserName()),
                     builtinUser.getUserName(), userDisplayInfo, false);
@@ -347,6 +393,17 @@ public class DataverseUserPage implements java.io.Serializable {
                 redirectPage = "/dataverse.xhtml";
             }
             
+            String userAffiliation = au.getAffiliation();
+            String alias = affiliationServiceBean.getAlias(userAffiliation);
+            Dataverse dv = dataverseService.findByAlias(alias);
+            if (dv == null || !dv.isReleased()) {
+                alias = "";
+            }
+            if (!alias.equals("") && redirectPage.contains("dataverse.xhtml")) {
+                redirectPage = "%2Fdataverse.xhtml%3Falias%3D" + alias;
+                logger.log(Level.FINE, "redirect {0} to affiliate {1} dataverse", new Object[] {redirectPage, alias});
+            }
+
             if ("dataverse.xhtml".equals(redirectPage)) {
                 redirectPage = redirectPage + "?alias=" + dataverseService.findRootDataverse().getAlias();
             }
@@ -491,7 +548,7 @@ public class DataverseUserPage implements java.io.Serializable {
                 case STATUSUPDATED:
                     userNotification.setTheObject(datasetVersionService.find(userNotification.getObjectId()));
                     break;
-                    
+
                 case CREATEACC:
                     userNotification.setTheObject(userNotification.getUser());
                     break;
@@ -541,11 +598,11 @@ public class DataverseUserPage implements java.io.Serializable {
         }
     }
 
-    
+
     public boolean showVerifyEmailButton() {
         return !confirmEmailService.hasVerifiedEmail(currentUser);
     }
-    
+
     public boolean getHasActiveVerificationToken(){
         //for user page to determine how to handle Confirm Email click
         return confirmEmailService.hasActiveVerificationToken(currentUser);
@@ -579,6 +636,12 @@ public class DataverseUserPage implements java.io.Serializable {
     }
 
     public AuthenticatedUserDisplayInfo getUserDisplayInfo() {
+        String localeCode = session.getLocaleCode();
+        if (!localeCode.equalsIgnoreCase("en")) {
+            ResourceBundle fromBundle = BundleUtil.getResourceBundle("affiliation", new Locale("en"));
+            ResourceBundle toBundle = BundleUtil.getResourceBundle("affiliation");
+            affiliationServiceBean.convertAffiliation(userDisplayInfo, fromBundle, toBundle);
+        }
         return userDisplayInfo;
     }
 
@@ -613,8 +676,10 @@ public class DataverseUserPage implements java.io.Serializable {
     }
 
     public void setRedirectPage(String redirectPage) {
-        this.redirectPage = redirectPage;
-    } 
+        if(redirectPage != null) {
+            this.redirectPage = redirectPage;
+        }
+    }
 
     public String getInputPassword() {
         return inputPassword;
@@ -707,5 +772,48 @@ public class DataverseUserPage implements java.io.Serializable {
         if(notification == null) return BundleUtil.getStringFromBundle("notification.email.info.unavailable");;
         if(notification.getRequestor() == null) return BundleUtil.getStringFromBundle("notification.email.info.unavailable");;
         return notification.getRequestor().getEmail() != null ? notification.getRequestor().getEmail() : BundleUtil.getStringFromBundle("notification.email.info.unavailable");
+    }
+
+    public List<String> getAffiliationList() {
+        affiliationList.clear();
+        ResourceBundle bundle = BundleUtil.getResourceBundle("affiliation");
+        affiliationList = affiliationServiceBean.getValues(bundle);
+        affiliationList.sort((String o1, String o2) -> {
+            o1 = Normalizer.normalize(o1, Normalizer.Form.NFD);
+            o2 = Normalizer.normalize(o2, Normalizer.Form.NFD);
+            return o1.compareTo(o2);
+        });
+        String affiliation = bundle.getString("affiliation.other");
+        affiliationList.remove(affiliation);
+        affiliationList.add(affiliationList.size(), affiliation);
+        if (editMode == EditMode.SUPPORT) {
+            if (sendFeedbackDialog.isLoggedIn()) {
+                String userEmail = sendFeedbackDialog.loggedInUserEmail();
+                AffiliationGroup group = affiliationGroupServiceBean.find(userEmail);
+                if(group != null) {
+                    affiliation = group.getDisplayName();
+                }
+            } else {
+                affiliation = affiliationServiceBean.getAffiliationFromIPAddress();
+            }
+            affiliation = affiliationServiceBean.getLocalizedAffiliation(affiliation);
+            sendFeedbackDialog.setMessageAffiliation(affiliation);
+        }
+        if (editMode == EditMode.EDIT) {
+            String language = bundle.getLocale().getLanguage();
+            if (StringUtils.isNotBlank(language) && !language.equalsIgnoreCase("en")) {
+                ResourceBundle enBundle = BundleUtil.getResourceBundle("affiliation", new Locale("en"));
+                affiliationServiceBean.convertAffiliation(userDisplayInfo, enBundle, bundle);
+            }
+        }
+        return affiliationList;
+    }
+
+    public UIInput getEmailField() {
+        return emailField;
+    }
+
+    public void setEmailField(UIInput emailField) {
+        this.emailField = emailField;
     }
 }

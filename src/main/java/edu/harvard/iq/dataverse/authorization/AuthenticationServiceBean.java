@@ -17,6 +17,7 @@ import edu.harvard.iq.dataverse.authorization.groups.impl.explicit.ExplicitGroup
 import edu.harvard.iq.dataverse.authorization.groups.impl.explicit.ExplicitGroupServiceBean;
 import edu.harvard.iq.dataverse.authorization.providers.AuthenticationProviderFactory;
 import edu.harvard.iq.dataverse.authorization.providers.AuthenticationProviderRow;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationServiceBean;
 import edu.harvard.iq.dataverse.authorization.providers.builtin.BuiltinAuthenticationProvider;
 import edu.harvard.iq.dataverse.authorization.providers.builtin.BuiltinAuthenticationProviderFactory;
 import edu.harvard.iq.dataverse.authorization.providers.builtin.BuiltinUser;
@@ -50,6 +51,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.ResourceBundle;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -57,6 +60,8 @@ import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
 import javax.ejb.Stateless;
+import javax.ejb.Singleton;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -68,14 +73,15 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * AuthenticationService is for general authentication-related operations.
  * It's no longer responsible for registering and listing
  * AuthenticationProviders! A dedicated singleton has been created for that
- * purpose - AuthenticationProvidersRegistrationServiceBean - and all the 
- * related code has been moved there. 
- * 
+ * purpose - AuthenticationProvidersRegistrationServiceBean - and all the
+ * related code has been moved there.
+ *
  */
 @Named
 @Stateless
@@ -108,29 +114,32 @@ public class AuthenticationServiceBean {
 
     @EJB
     PasswordValidatorServiceBean passwordValidatorService;
-    
+
     @EJB
     DvObjectServiceBean dvObjSvc;
-    
+
     @EJB
     RoleAssigneeServiceBean roleAssigneeSvc;
-    
+
     @EJB
     GuestbookResponseServiceBean gbRespSvc;
-    
+
     @EJB
     DatasetVersionServiceBean datasetVersionService;
-    
-    @EJB 
+
+    @EJB
     ExplicitGroupServiceBean explicitGroupService;
 
     @EJB
     SavedSearchServiceBean savedSearchService;
 
+    @Inject
+    AffiliationServiceBean affiliationBean;
+
     @PersistenceContext(unitName = "VDCNet-ejbPU")
     private EntityManager em;
-        
-        
+
+
     public AbstractOAuth2AuthenticationProvider getOAuth2Provider( String id ) {
         return authProvidersRegistrationService.getOAuth2AuthProvidersMap().get(id);
     }
@@ -458,7 +467,7 @@ public class AuthenticationServiceBean {
             return null;
         }
     }
-    
+
     public AuthenticatedUser lookupUserForWorkflowInvocationID(String wfId) {
         try {
             PendingWorkflowInvocation pwfi = em.find(PendingWorkflowInvocation.class, wfId);
@@ -510,7 +519,7 @@ public class AuthenticationServiceBean {
         if (!savedSearchService.findByAuthenticatedUser(au).isEmpty()) {
             reasons.add(BundleUtil.getStringFromBundle("admin.api.deleteUser.failure.savedSearches"));
         }
-        
+
         if (!reasons.isEmpty()) {
             retVal = BundleUtil.getStringFromBundle("admin.api.deleteUser.failure.prefix", Arrays.asList(au.getIdentifier()));
             retVal += " " + reasons.stream().collect(Collectors.joining("; ")) + ".";
@@ -529,7 +538,7 @@ public class AuthenticationServiceBean {
         deletePendingAccessRequests(au);
         
         deleteBannerMessages(au);
-               
+
         if (!explicitGroupService.findGroups(au).isEmpty()) {
             for(ExplicitGroup explicitGroup: explicitGroupService.findGroups(au)){
                 explicitGroup.removeByRoleAssgineeIdentifier(au.getIdentifier());
@@ -539,17 +548,17 @@ public class AuthenticationServiceBean {
     }
     
     private void deleteBannerMessages(AuthenticatedUser  au){
-        
+
        em.createNativeQuery("delete from userbannermessage where user_id  = "+au.getId()).executeUpdate();
-        
+
     }
-    
+
     private void deletePendingAccessRequests(AuthenticatedUser  au){
         
        em.createNativeQuery("delete from fileaccessrequests where authenticated_user_id  = "+au.getId()).executeUpdate();
         
     }
-    
+
     public AuthenticatedUser save( AuthenticatedUser user ) {
         em.persist(user);
         em.flush();
@@ -616,7 +625,7 @@ public class AuthenticationServiceBean {
         // set account creation time & initial login time (same timestamp)
         authenticatedUser.setCreatedTime(new Timestamp(new Date().getTime()));
         authenticatedUser.setLastLoginTime(authenticatedUser.getCreatedTime());
-        
+        saveAffiliationInEnglish(userDisplayInfo);
         authenticatedUser.applyDisplayInfo(userDisplayInfo);
 
         // we have no desire for leading or trailing whitespace in identifiers
@@ -674,6 +683,8 @@ public class AuthenticationServiceBean {
     }
     
     public AuthenticatedUser updateAuthenticatedUser(AuthenticatedUser user, AuthenticatedUserDisplayInfo userDisplayInfo) {
+        user.setLocalizedAffiliation(userDisplayInfo.getAffiliation());
+        saveAffiliationInEnglish(userDisplayInfo);
         user.applyDisplayInfo(userDisplayInfo);
         actionLogSvc.log( new ActionLogRecord(ActionLogRecord.ActionType.Auth, "updateUser")
             .setInfo(user.getIdentifier()));
@@ -690,7 +701,7 @@ public class AuthenticationServiceBean {
     
     
     public Set<AuthenticationProviderFactory> listProviderFactories() {
-        return new HashSet<>( authProvidersRegistrationService.getProviderFactoriesMap().values() ); 
+        return new HashSet<>( authProvidersRegistrationService.getProviderFactoriesMap().values() );
     }
     
     public Timestamp getCurrentTimestamp() {
@@ -748,6 +759,14 @@ public class AuthenticationServiceBean {
         }
         AuthenticatedUser shibUser = lookupUser(shibProviderId, perUserShibIdentifier);
         if (shibUser != null) {
+            ConfirmEmailData confirmEmailData = confirmEmailService.findSingleConfirmEmailDataByUser(shibUser);
+            if (confirmEmailData != null) {
+                em.remove(confirmEmailData);
+            }
+            long nowInMilliseconds = new Date().getTime();
+            Timestamp emailConfirmed = new Timestamp(nowInMilliseconds);
+            shibUser.setEmailConfirmed(emailConfirmed);
+            em.merge(shibUser);
             return shibUser;
         }
         return null;
@@ -941,11 +960,19 @@ public class AuthenticationServiceBean {
             return null;
         }
     }
-    
+
     public List <WorkflowComment> getWorkflowCommentsByAuthenticatedUser(AuthenticatedUser user){ 
         Query query = em.createQuery("SELECT wc FROM WorkflowComment wc WHERE wc.authenticatedUser.id = :auid");
         query.setParameter("auid", user.getId());       
         return query.getResultList();
     }
 
+    private void saveAffiliationInEnglish(AuthenticatedUserDisplayInfo userDisplayInfo) {
+        ResourceBundle bundle = BundleUtil.getResourceBundle("affiliation");
+        String language = bundle.getLocale().getLanguage();
+        if (StringUtils.isNotBlank(language) && !language.equalsIgnoreCase("en")) {
+            ResourceBundle enBundle = BundleUtil.getResourceBundle("affiliation", new Locale("en"));
+            affiliationBean.convertAffiliation(userDisplayInfo, bundle, enBundle);
+        }
+    }
 }

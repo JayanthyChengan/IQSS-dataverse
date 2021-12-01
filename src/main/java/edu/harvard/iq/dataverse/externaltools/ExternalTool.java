@@ -97,6 +97,9 @@ public class ExternalTool implements Serializable {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String contentType;
 
+    @Transient
+    private String displayNameLang;
+
     /**
      * This default constructor is only here to prevent this error at
      * deployment:
@@ -189,6 +192,10 @@ public class ExternalTool implements Serializable {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public void setDisplayNameLang(String displayNameLang) {
+        this.displayNameLang = displayNameLang;
     }
 
     public String  getToolName() { return toolName; }
