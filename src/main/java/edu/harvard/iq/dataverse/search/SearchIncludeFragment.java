@@ -1272,6 +1272,10 @@ public class SearchIncludeFragment implements java.io.Serializable {
 
     }
 
+    public String getExternalStatusPropertyName(String status) {
+        return status.toLowerCase().replace(" ", "_");
+    }
+
     public boolean canPublishDataset(Long datasetId){
         return permissionsWrapper.canIssuePublishDatasetCommand(dvObjectService.findDvObject(datasetId));
     }
