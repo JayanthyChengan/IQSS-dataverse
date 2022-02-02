@@ -653,7 +653,7 @@ the Installation Guide for a suggested location on disk for the Solr schema file
 You can either pipe the downloaded schema to the script or provide the file as an argument. (We recommended you to take
 a look at usage output of ``update-fields.sh -h``)
 
-.. code-block::
+.. code-block:: bash
     :caption: Example usage of ``update-fields.sh``
 
     curl "http://localhost:8080/api/admin/index/solr/schema" | update-fields.sh /usr/local/solr/server/solr/collection1/conf/schema.xml
