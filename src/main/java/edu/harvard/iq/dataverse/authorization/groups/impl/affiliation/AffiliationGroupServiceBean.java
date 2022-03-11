@@ -57,8 +57,10 @@ public class AffiliationGroupServiceBean {
         String domain = userEmail.substring(userEmail.indexOf("@")+1).trim();
         long count = domain.chars().filter(ch -> ch == '.').count();
         if (count > 1) {
-            int secondLastIndex = StringUtils.lastIndexOf(domain, '.', domain.lastIndexOf(".") - 1);
-            topLevelDomain = domain.substring(secondLastIndex + 1);
+            //int secondLastIndex = StringUtils.lastIndexOf(domain, '.', domain.lastIndexOf(".") - 1);
+            //topLevelDomain = domain.substring(secondLastIndex + 1);
+            int secondLastIndex = StringUtils.lastIndexOf(domain, '.', domain.lastIndexOf(".") );
+            topLevelDomain = domain.substring(0,secondLastIndex );
         } else {
             topLevelDomain = domain;
         }
@@ -138,6 +140,7 @@ public class AffiliationGroupServiceBean {
 
     private AffiliationGroup matchByTopLevelEmailDomain(String emaildomain) {
         try {
+            logger.info("======== matchByTopLevelEmailDomain email domain. " + emaildomain);
             TypedQuery<AffiliationGroup> namedQuery = em.createNamedQuery("AffiliationGroup.findByEmailDomain", AffiliationGroup.class);
             namedQuery.setParameter("emailDomain", "%" + emaildomain.toUpperCase() + "%");
             return namedQuery.getSingleResult();
