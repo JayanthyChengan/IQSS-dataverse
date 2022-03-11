@@ -57,14 +57,17 @@ public class AffiliationGroupServiceBean {
         String domain = userEmail.substring(userEmail.indexOf("@")+1).trim();
         long count = domain.chars().filter(ch -> ch == '.').count();
         if (count > 1) {
-            //int secondLastIndex = StringUtils.lastIndexOf(domain, '.', domain.lastIndexOf(".") - 1);
-            //topLevelDomain = domain.substring(secondLastIndex + 1);
-            int secondLastIndex = StringUtils.lastIndexOf(domain, '.', domain.lastIndexOf(".") );
-            topLevelDomain = domain.substring(0,secondLastIndex );
+            int secondLastIndex = StringUtils.lastIndexOf(domain, '.', domain.lastIndexOf(".") - 1);
+            topLevelDomain = domain.substring(secondLastIndex + 1);
+            //int secondLastIndex = StringUtils.lastIndexOf(domain, '.', domain.lastIndexOf(".") );
+            //topLevelDomain = domain.substring(0,secondLastIndex );
         } else {
             topLevelDomain = domain;
         }
         AffiliationGroup group = matchByTopLevelEmailDomain(topLevelDomain);
+        if (group == null) {
+            group = matchByTopLevelEmailDomain(domain);
+        }
         if (group != null) {
             String emaildomain = group.getEmaildomain();
             String[] edomains = emaildomain.split("\\s*,\\s*");
@@ -73,6 +76,7 @@ public class AffiliationGroupServiceBean {
                     return group;
             }
         }
+
         return null;
     }
 
