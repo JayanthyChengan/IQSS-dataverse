@@ -65,18 +65,28 @@ public class AffiliationGroupServiceBean {
             topLevelDomain = domain;
         }
         AffiliationGroup group = matchByTopLevelEmailDomain(topLevelDomain);
-        if (group == null) {
-            group = matchByTopLevelEmailDomain(domain);
-        }
+
+        logger.info("======== topLevelDomain   : " + topLevelDomain);
+        logger.info("======== domain   : " + domain);
+
         if (group != null) {
             String emaildomain = group.getEmaildomain();
+            logger.info("======== group not null,AffiliationGroup find : " + emaildomain);
             String[] edomains = emaildomain.split("\\s*,\\s*");
             for(String d : edomains) {
-                if (d.equalsIgnoreCase(topLevelDomain))
+                if (d.equalsIgnoreCase(topLevelDomain)) {
+                    logger.info("======== return group 1 AffiliationGroup find : " + topLevelDomain);
                     return group;
+                }
+            }
+            for(String d : edomains) {
+                if (d.equalsIgnoreCase(domain)) {
+                    logger.info("======== return group 2 AffiliationGroup find : " + domain);
+                    return group;
+                }
             }
         }
-
+        logger.info("========   AffiliationGroup find return NULL: " );
         return null;
     }
 
@@ -144,7 +154,7 @@ public class AffiliationGroupServiceBean {
 
     private AffiliationGroup matchByTopLevelEmailDomain(String emaildomain) {
         try {
-            logger.info("======== matchByTopLevelEmailDomain email domain. " + emaildomain);
+            logger.info("======== matchByTopLevelEmailDomain email domain: " + emaildomain);
             TypedQuery<AffiliationGroup> namedQuery = em.createNamedQuery("AffiliationGroup.findByEmailDomain", AffiliationGroup.class);
             namedQuery.setParameter("emailDomain", "%" + emaildomain.toUpperCase() + "%");
             return namedQuery.getSingleResult();
