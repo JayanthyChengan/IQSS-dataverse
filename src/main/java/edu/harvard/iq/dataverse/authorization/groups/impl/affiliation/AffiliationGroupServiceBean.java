@@ -145,7 +145,6 @@ public class AffiliationGroupServiceBean {
 
     private AffiliationGroup matchByTopLevelEmailDomain(String emaildomain) {
         try {
-            logger.info("======== matchByTopLevelEmailDomain email domain: " + emaildomain);
             TypedQuery<AffiliationGroup> namedQuery = em.createNamedQuery("AffiliationGroup.findByEmailDomain", AffiliationGroup.class);
             namedQuery.setParameter("emailDomain", "%" + emaildomain.toUpperCase() + "%");
             return namedQuery.getSingleResult();
