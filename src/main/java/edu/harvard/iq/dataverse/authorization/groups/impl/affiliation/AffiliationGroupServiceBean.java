@@ -59,34 +59,25 @@ public class AffiliationGroupServiceBean {
         if (count > 1) {
             int secondLastIndex = StringUtils.lastIndexOf(domain, '.', domain.lastIndexOf(".") - 1);
             topLevelDomain = domain.substring(secondLastIndex + 1);
-            //int secondLastIndex = StringUtils.lastIndexOf(domain, '.', domain.lastIndexOf(".") );
-            //topLevelDomain = domain.substring(0,secondLastIndex );
         } else {
             topLevelDomain = domain;
         }
         AffiliationGroup group = matchByTopLevelEmailDomain(topLevelDomain);
 
-        logger.info("======== topLevelDomain   : " + topLevelDomain);
-        logger.info("======== domain   : " + domain);
-
         if (group != null) {
             String emaildomain = group.getEmaildomain();
-            logger.info("======== group not null,AffiliationGroup find : " + emaildomain);
-            String[] edomains = emaildomain.split("\\s*,\\s*");
+             String[] edomains = emaildomain.split("\\s*,\\s*");
             for(String d : edomains) {
                 if (d.equalsIgnoreCase(topLevelDomain)) {
-                    logger.info("======== return group 1 AffiliationGroup find : " + topLevelDomain);
-                    return group;
+                     return group;
                 }
             }
             for(String d : edomains) {
                 if (d.equalsIgnoreCase(domain)) {
-                    logger.info("======== return group 2 AffiliationGroup find : " + domain);
-                    return group;
+                     return group;
                 }
             }
         }
-        logger.info("========   AffiliationGroup find return NULL: " );
         return null;
     }
 
