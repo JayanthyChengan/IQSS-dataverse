@@ -988,7 +988,8 @@ public class S3AccessIO<T extends DvObject> extends StorageIO<T> implements Glob
         GeneratePresignedUrlRequest generatePresignedUrlRequest = 
                 new GeneratePresignedUrlRequest(bucketName, key).withMethod(HttpMethod.PUT).withExpiration(expiration);
         //Require user to add this header to indicate a temporary file
-        generatePresignedUrlRequest.putCustomRequestHeader(Headers.S3_TAGGING, "dv-state=temp");
+        // JC commented the below line due to CORS issue
+        //generatePresignedUrlRequest.putCustomRequestHeader(Headers.S3_TAGGING, "dv-state=temp");
         
         URL presignedUrl; 
         try {
@@ -1037,7 +1038,8 @@ public class S3AccessIO<T extends DvObject> extends StorageIO<T> implements Glob
         } else {
             JsonObjectBuilder urls = Json.createObjectBuilder();
             InitiateMultipartUploadRequest initiationRequest = new InitiateMultipartUploadRequest(bucketName, key);
-            initiationRequest.putCustomRequestHeader(Headers.S3_TAGGING, "dv-state=temp");
+            // JC commented the below line due to CORS issue
+            // initiationRequest.putCustomRequestHeader(Headers.S3_TAGGING, "dv-state=temp");
             InitiateMultipartUploadResult initiationResponse = s3.initiateMultipartUpload(initiationRequest);
             String uploadId = initiationResponse.getUploadId();
             for (int i = 1; i <= (fileSize / minPartSize) + (fileSize % minPartSize > 0 ? 1 : 0); i++) {
