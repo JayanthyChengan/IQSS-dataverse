@@ -37,6 +37,7 @@ public abstract class PersistedGlobalGroup implements Group, Serializable {
     private String persistedGroupAlias;
     private String displayName;
     private String description;
+    private String emaildomain;
 
     public void setPersistedGroupAlias(String alias) {
         this.persistedGroupAlias = alias;
@@ -75,6 +76,14 @@ public abstract class PersistedGlobalGroup implements Group, Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getEmaildomain() {
+        return emaildomain;
+    }
+
+    public void setEmaildomain(String emaildomain) {
+        this.emaildomain = emaildomain;
     }
 
     @Override

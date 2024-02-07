@@ -413,7 +413,8 @@ public class SettingsServiceBean {
          *
          */
         AllowCors, 
-        
+        ShibInstitutionIgnoreList,
+
         /**
          * Lifespan, in minutes, of a login user session 
          * (both DataverseSession and the underlying HttpSession)

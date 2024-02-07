@@ -20,6 +20,7 @@ import edu.harvard.iq.dataverse.MetadataBlockServiceBean;
 import edu.harvard.iq.dataverse.TermsOfUseAndAccess;
 import edu.harvard.iq.dataverse.api.Util;
 import edu.harvard.iq.dataverse.api.dto.FieldDTO;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationGroup;
 import edu.harvard.iq.dataverse.authorization.groups.impl.ipaddress.IpGroup;
 import edu.harvard.iq.dataverse.authorization.groups.impl.ipaddress.ip.IpAddress;
 import edu.harvard.iq.dataverse.authorization.groups.impl.ipaddress.ip.IpAddressRange;
@@ -49,12 +50,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonString;
-import jakarta.json.JsonValue;
-import jakarta.json.JsonValue.ValueType;
+import java.util.stream.Stream;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonString;
+import javax.json.JsonValue;
+import javax.json.JsonValue.ValueType;
 
 /**
  * Parses JSON objects into domain objects.
@@ -69,8 +72,8 @@ public class JsonParser {
     MetadataBlockServiceBean blockService;
     SettingsServiceBean settingsService;
     LicenseServiceBean licenseService;
-    HarvestingClient harvestingClient = null; 
-    
+    HarvestingClient harvestingClient = null;
+
     /**
      * if lenient, we will accept alternate spellings for controlled vocabulary values
      */
@@ -86,7 +89,7 @@ public class JsonParser {
     public JsonParser(DatasetFieldServiceBean datasetFieldSvc, MetadataBlockServiceBean blockService, SettingsServiceBean settingsService, LicenseServiceBean licenseService) {
         this(datasetFieldSvc, blockService, settingsService, licenseService, null);
     }
-    
+
     public JsonParser(DatasetFieldServiceBean datasetFieldSvc, MetadataBlockServiceBean blockService, SettingsServiceBean settingsService, LicenseServiceBean licenseService, HarvestingClient harvestingClient) {
         this.datasetFieldSvc = datasetFieldSvc;
         this.blockService = blockService;
@@ -151,7 +154,7 @@ public class JsonParser {
                 }
             }
         }
-        
+
         if (jobj.containsKey("filePIDsEnabled")) {
             dv.setFilePIDsEnabled(jobj.getBoolean("filePIDsEnabled"));
         }
@@ -311,6 +314,21 @@ public class JsonParser {
         return enums;
     }
 
+    public Stream<AffiliationGroup> parseAffiliationGroups(JsonObject object) {
+        JsonArray jsonArray = object.getJsonArray("affiliations");
+        Stream<AffiliationGroup> affiliationGroupStream = jsonArray.stream().map(jsonValue -> (JsonObject) jsonValue).map(this::parseAffiliationGroup);
+        return affiliationGroupStream;
+    }
+
+    public AffiliationGroup parseAffiliationGroup(JsonObject object) {
+        AffiliationGroup group = new AffiliationGroup();
+        group.setDisplayName(object.getString("name", null));
+        group.setDescription(object.getString("description", null));
+        group.setPersistedGroupAlias(object.getString("alias", null));
+        group.setEmaildomain(object.getString("emaildomain", null));
+        return group;
+    }
+
     public DatasetVersion parseDatasetVersion(JsonObject obj) throws JsonParseException {
         return parseDatasetVersion(obj, new DatasetVersion());
     }
@@ -372,10 +390,10 @@ public class JsonParser {
             // Terms of Use related fields
             TermsOfUseAndAccess terms = new TermsOfUseAndAccess();
 
-            License license = null; 
-            
+            License license = null;
+
             try {
-                // This method will attempt to parse the license in the format 
+                // This method will attempt to parse the license in the format
                 // in which it appears in our json exports, as a compound
                 // field, for ex.:
                 // "license": {
@@ -385,14 +403,14 @@ public class JsonParser {
                 license = parseLicense(obj.getJsonObject("license"));
             } catch (ClassCastException cce) {
                 logger.fine("class cast exception parsing the license section (will try parsing as a string)");
-                // attempt to parse as string: 
+                // attempt to parse as string:
                 // i.e. this is for backward compatibility, after the bug in #9155
-                // was fixed, with the old style of encoding the license info 
-                // in input json, for ex.: 
+                // was fixed, with the old style of encoding the license info
+                // in input json, for ex.:
                 // "license" : "CC0 1.0"
                 license = parseLicense(obj.getString("license", null));
             }
-            
+
             if (license == null) {
                 terms.setLicense(license);
                 terms.setTermsOfUse(obj.getString("termsOfUse", null));
@@ -450,7 +468,7 @@ public class JsonParser {
         if (license == null) throw new JsonParseException("Invalid license: " + licenseNameOrUri);
         return license;
     }
-    
+
     private edu.harvard.iq.dataverse.license.License parseLicense(JsonObject licenseObj) throws JsonParseException {
         if (licenseObj == null){
             boolean safeDefaultIfKeyNotFound = true;
@@ -460,32 +478,32 @@ public class JsonParser {
                 return licenseService.getDefault();
             }
         }
-        
+
         String licenseName = licenseObj.getString("name", null);
         String licenseUri = licenseObj.getString("uri", null);
-        
-        License license = null; 
-        
+
+        License license = null;
+
         // If uri is provided, we'll try that first. This is an easier lookup
         // method; the uri is always the same. The name may have been customized
         // (translated) on this instance, so we may be dealing with such translated
-        // name, if this is exported json that we are processing. Meaning, unlike 
+        // name, if this is exported json that we are processing. Meaning, unlike
         // the uri, we cannot simply check it against the name in the License
-        // database table. 
+        // database table.
         if (licenseUri != null) {
             license = licenseService.getByNameOrUri(licenseUri);
         }
-        
+
         if (license != null) {
             return license;
         }
-        
+
         if (licenseName == null) {
-            String exMsg = "Invalid or unsupported license section submitted" 
+            String exMsg = "Invalid or unsupported license section submitted"
                     + (licenseUri != null ? ": " + licenseUri : ".");
-            throw new JsonParseException("Invalid or unsupported license section submitted."); 
+            throw new JsonParseException("Invalid or unsupported license section submitted.");
         }
-        
+
         license = licenseService.getByPotentiallyLocalizedName(licenseName);
         if (license == null) {
             throw new JsonParseException("Invalid or unsupported license: " + licenseName);
@@ -595,8 +613,8 @@ public class JsonParser {
         }
         String storageIdentifier = null;
         /**
-         * When harvesting from other Dataverses using this json format, we 
-         * don't want to import their storageidentifiers verbatim. Instead, we 
+         * When harvesting from other Dataverses using this json format, we
+         * don't want to import their storageidentifiers verbatim. Instead, we
          * will modify them to point to the access API location on the remote
          * archive side.
          */
@@ -606,11 +624,11 @@ public class JsonParser {
                     + "/api/access/datafile/"
                     + remoteId;
             /**
-             * Note that we don't have any practical use for these urls as 
+             * Note that we don't have any practical use for these urls as
              * of now. We used to, in the past, perform some tasks on harvested
              * content that involved trying to access the files. In any event, it
-             * makes more sense to collect these urls, than the storage 
-             * identifiers imported as is, which become completely meaningless 
+             * makes more sense to collect these urls, than the storage
+             * identifiers imported as is, which become completely meaningless
              * on the local system.
              */
         } else {

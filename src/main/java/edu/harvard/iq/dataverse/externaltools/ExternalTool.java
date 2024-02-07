@@ -6,20 +6,21 @@ import edu.harvard.iq.dataverse.util.StringUtil;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
-
-import jakarta.json.Json;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
+import java.util.logging.Logger;
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObjectBuilder;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 
 /**
  * A specification or definition for how an external tool is intended to
@@ -28,6 +29,8 @@ import jakarta.persistence.OneToMany;
  */
 @Entity
 public class ExternalTool implements Serializable {
+
+    private static final Logger logger = Logger.getLogger(ExternalToolServiceBean.class.getCanonicalName());
 
     public static final String DISPLAY_NAME = "displayName";
     public static final String DESCRIPTION = "description";
@@ -95,6 +98,9 @@ public class ExternalTool implements Serializable {
      */
     @Column(nullable = true, columnDefinition = "TEXT")
     private String contentType;
+
+    @Transient
+    private String displayNameLang;
 
     /**
      * Set of API calls the tool would like to be able to use (e,.g. for retrieving
@@ -214,6 +220,10 @@ public class ExternalTool implements Serializable {
         return displayName;
     }
 
+    public void setDisplayNameLang(String displayNameLang) {
+        this.displayNameLang = displayNameLang;
+    }
+
     public String  getToolName() { return toolName; }
 
     public void setDisplayName(String displayName) {
@@ -246,7 +256,7 @@ public class ExternalTool implements Serializable {
         }
         return false;
     }
-    
+
     public boolean isQueryTool() {
         for (ExternalToolType externalToolType : externalToolTypes) {
             if (externalToolType.getType().equals(Type.QUERY)) {
@@ -255,7 +265,7 @@ public class ExternalTool implements Serializable {
         }
         return false;
     }
-    
+
     public boolean isPreviewTool() {
         for (ExternalToolType externalToolType : externalToolTypes) {
             if (externalToolType.getType().equals(Type.PREVIEW)) {

@@ -2,6 +2,7 @@ package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.UserNotification.Type;
 import edu.harvard.iq.dataverse.authorization.Permission;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationServiceBean;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.User;
 import edu.harvard.iq.dataverse.dataaccess.DataAccess;
@@ -36,6 +37,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -110,6 +112,8 @@ public class DataversePage implements java.io.Serializable {
     DataverseLinkingServiceBean linkingService;
     @Inject PermissionsWrapper permissionsWrapper;
     @Inject DataverseHeaderFragment dataverseHeaderFragment; 
+    @Inject
+    AffiliationServiceBean affiliationServiceBean;
 
     private Dataverse dataverse = new Dataverse();  
 
@@ -431,17 +435,15 @@ public class DataversePage implements java.io.Serializable {
     private List<Dataverse> carouselFeaturedDataverses = null;
     
     public List<Dataverse> getCarouselFeaturedDataverses() {
-        if (carouselFeaturedDataverses != null) {
-            return carouselFeaturedDataverses;
+        if (carouselFeaturedDataverses == null) {
+            carouselFeaturedDataverses = featuredDataverseService.findByDataverseIdQuick(dataverse.getId());
         }
-        carouselFeaturedDataverses = featuredDataverseService.findByDataverseIdQuick(dataverse.getId());/*new ArrayList();
-        
-        List<DataverseFeaturedDataverse> featuredList = featuredDataverseService.findByDataverseId(dataverse.getId());
-        for (DataverseFeaturedDataverse dfd : featuredList) {
-            Dataverse fd = dfd.getFeaturedDataverse();
-            retList.add(fd);
-        }*/
-        
+        String ipAffiliation = affiliationServiceBean.getAffiliationFromIPAddress();
+        Optional<Dataverse> match = carouselFeaturedDataverses.stream().filter(dataverse -> ipAffiliation.equalsIgnoreCase(dataverse.getAffiliation())).findFirst();
+        if (match.isPresent()) {
+            carouselFeaturedDataverses.remove(match.get());
+            carouselFeaturedDataverses.add(0, match.get());
+        }
         return carouselFeaturedDataverses;
     }
 

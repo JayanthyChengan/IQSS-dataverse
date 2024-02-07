@@ -3,6 +3,7 @@ package edu.harvard.iq.dataverse.export.openaire;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.List;
 
 import jakarta.json.JsonObject;
 import javax.xml.stream.XMLOutputFactory;
@@ -248,7 +249,7 @@ public class OpenAireExportUtil {
                             if (StringUtils.isNotBlank(creatorName)) {
                                 creator_check = writeOpenTag(xmlw, "creators", creator_check);
                                 xmlw.writeStartElement("creator"); // <creator>
-                                
+
                                 Map<String, String> creator_map = new HashMap<String, String>();
                                 JsonObject creatorObj = PersonOrOrgUtil.getPersonOrOrganization(creatorName, false,
                                         StringUtils.containsIgnoreCase(nameIdentifierScheme, "orcid"));
@@ -377,6 +378,30 @@ public class OpenAireExportUtil {
             xmlw.writeCharacters(title);
             xmlw.writeEndElement(); // </title>
         }
+        return title_check;
+    }
+
+    private static boolean writeMultipleTitleElement(XMLStreamWriter xmlw, String titleType, DatasetVersionDTO datasetVersionDTO, String metadataBlockName, boolean title_check, String language) throws XMLStreamException {
+        MetadataBlockDTO block = datasetVersionDTO.getMetadataBlocks().get(metadataBlockName);
+        if (block != null) {
+            logger.info("Block is not empty");
+            List<FieldDTO> fieldsBlock =  block.getFields();
+            if (fieldsBlock != null) {
+                for (FieldDTO fieldDTO : fieldsBlock) {
+                    logger.info(titleType + " " + fieldDTO.getTypeName());
+                    if (titleType.toLowerCase().equals(fieldDTO.getTypeName().toLowerCase())) {
+                        logger.info("Found Alt title");
+                        List<String> fields = fieldDTO.getMultiplePrimitive();
+                        for (String value : fields) {
+                            if (!writeTitleElement(xmlw, titleType, value, title_check, language))
+                                title_check = false;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         return title_check;
     }
 

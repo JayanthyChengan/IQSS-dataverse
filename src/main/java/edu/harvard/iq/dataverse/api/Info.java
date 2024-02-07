@@ -3,12 +3,15 @@ package edu.harvard.iq.dataverse.api;
 import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import edu.harvard.iq.dataverse.util.SystemConfig;
-import jakarta.ejb.EJB;
-import jakarta.json.Json;
-import jakarta.json.JsonValue;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.core.Response;
+import javax.ejb.EJB;
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
+import java.util.Arrays;
+import java.util.List;
 
 @Path("info")
 public class Info extends AbstractApiBean {
@@ -74,6 +77,21 @@ public class Info extends AbstractApiBean {
             return ok(Json.createObjectBuilder().add("message", setting));
         } else {
             return notFound("Setting " + key + " not found");
+        }
+    }
+
+
+    @GET
+    @Path("idpignorelist")
+    public Response getShibInstitutionIgnoreList() {
+        JsonArrayBuilder arrBld = Json.createArrayBuilder();
+        String idpCSV = settingsService.getValueForKey(SettingsServiceBean.Key.ShibInstitutionIgnoreList);
+        if (idpCSV != null) {
+            List<String> shibIdpIgnoreList = Arrays.asList(idpCSV.split("\\|"));
+            shibIdpIgnoreList.forEach(idp -> arrBld.add(idp));
+            return ok(arrBld);
+        } else {
+            return null;
         }
     }
 }

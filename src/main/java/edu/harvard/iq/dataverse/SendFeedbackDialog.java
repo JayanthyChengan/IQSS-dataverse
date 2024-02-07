@@ -1,5 +1,6 @@
 package edu.harvard.iq.dataverse;
 
+import edu.harvard.iq.dataverse.authorization.providers.builtin.DataverseUserPage;
 import edu.harvard.iq.dataverse.branding.BrandingUtil;
 import edu.harvard.iq.dataverse.feedback.Feedback;
 import edu.harvard.iq.dataverse.feedback.FeedbackUtil;
@@ -44,6 +45,8 @@ public class SendFeedbackDialog implements java.io.Serializable {
      */
     private String messageSubject = "";
 
+    private String messageAffiliation = "";
+
     /**
      * First operand in addition problem.
      */
@@ -85,6 +88,9 @@ public class SendFeedbackDialog implements java.io.Serializable {
     @Inject
     DataverseSession dataverseSession;
 
+    @Inject
+    DataverseUserPage dataverseUserPage;
+
     public void setUserEmail(String uEmail) {
         userEmail = uEmail;
     }
@@ -103,6 +109,10 @@ public class SendFeedbackDialog implements java.io.Serializable {
         userSum = null;
         String supportEmail = JvmSettings.SUPPORT_EMAIL.lookupOptional().orElse(settingsService.getValueForKey(SettingsServiceBean.Key.SystemEmail));
         systemAddress = MailUtil.parseSystemAddress(supportEmail);
+        //String systemEmail = settingsService.getValueForKey(SettingsServiceBean.Key.SystemEmail);
+        //systemAddress = MailUtil.parseSystemAddress(systemEmail);
+
+        dataverseUserPage.supportMode() ;
     }
 
     public Long getOp1() {
@@ -138,7 +148,7 @@ public class SendFeedbackDialog implements java.io.Serializable {
             return BundleUtil.getStringFromBundle("dataset") + " " + BundleUtil.getStringFromBundle("contact.contact");
         }
     }
-    
+
     public String getMessageCC() {
         if (ccSupport()) {
             return BrandingUtil.getSupportTeamName(systemAddress);
@@ -171,6 +181,14 @@ public class SendFeedbackDialog implements java.io.Serializable {
 
     public String getMessageSubject() {
         return messageSubject;
+    }
+
+    public void setMessageAffiliation(String messageAffiliation) {
+        this.messageAffiliation = messageAffiliation;
+    }
+
+    public String getMessageAffiliation() {
+        return messageAffiliation;
     }
 
     public boolean isLoggedIn() {
@@ -209,9 +227,9 @@ public class SendFeedbackDialog implements java.io.Serializable {
     public String sendMessage() {
         String installationBrandName = BrandingUtil.getInstallationBrandName();
         String supportTeamName = BrandingUtil.getSupportTeamName(systemAddress);
+        List<Feedback> feedbacks = FeedbackUtil.gatherFeedback(recipient, dataverseSession, messageAffiliation + " - " + messageSubject  , userMessage, systemAddress, userEmail, systemConfig.getDataverseSiteUrl(), installationBrandName, supportTeamName);
 
-        Feedback feedback = FeedbackUtil.gatherFeedback(feedbackTarget, dataverseSession, messageSubject, userMessage, systemAddress, userEmail, systemConfig.getDataverseSiteUrl(), installationBrandName, supportTeamName, ccSupport());
-        if (feedback==null) {
+        if (feedbacks.isEmpty()) {
             logger.warning("No feedback has been sent!");
             return null;
         }
@@ -219,15 +237,15 @@ public class SendFeedbackDialog implements java.io.Serializable {
             mailService.sendMail(feedback.getFromEmail(), feedback.getToEmail(), feedback.getCcEmail(), feedback.getSubject(), feedback.getBody());
         return null;
     }
-    
+
     public boolean ccSupport() {
         return ccSupport(feedbackTarget);
     }
-    
+
     public static boolean ccSupport(DvObject feedbackTarget) {
         //Setting is enabled and this isn't already a direct message to support (no feedbackTarget)
         Optional<Boolean> ccSupport = JvmSettings.CC_SUPPORT_ON_CONTACT_EMAIL.lookupOptional(Boolean.class);
-        
+
         return feedbackTarget!=null && ccSupport.isPresent() &&ccSupport.get();
     }
 

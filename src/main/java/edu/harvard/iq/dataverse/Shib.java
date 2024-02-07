@@ -5,6 +5,7 @@ import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.UserIdentifier;
 import edu.harvard.iq.dataverse.authorization.UserRecordIdentifier;
 import edu.harvard.iq.dataverse.authorization.groups.GroupServiceBean;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationServiceBean;
 import edu.harvard.iq.dataverse.authorization.providers.builtin.BuiltinUser;
 import edu.harvard.iq.dataverse.authorization.providers.shib.ShibAuthenticationProvider;
 import edu.harvard.iq.dataverse.authorization.providers.shib.ShibServiceBean;
@@ -55,6 +56,8 @@ public class Shib implements java.io.Serializable {
     GroupServiceBean groupService;
     @EJB
     UserNotificationServiceBean userNotificationService;
+    @Inject
+    AffiliationServiceBean affiliationBean;
     @EJB
     SettingsServiceBean settingsService;
 	@EJB
@@ -261,7 +264,8 @@ public class Shib implements java.io.Serializable {
             logger.fine("Updating display info for " + au.getName());
             authSvc.updateAuthenticatedUser(au, displayInfo);
             logInUserAndSetShibAttributes(au);
-            String prettyFacesHomePageString = getPrettyFacesHomePageString(false);
+            logger.log(Level.INFO, "{0}, {1}, {2} {3}, {4}", new Object[]{"init()", shibIdp, displayInfo.getEmailAddress(), displayInfo.getAffiliation(), affiliation});
+            String prettyFacesHomePageString = getPrettyFacesHomePageString(false, affiliation);
             try {
                 FacesContext.getCurrentInstance().getExternalContext().redirect(prettyFacesHomePageString);
             } catch (IOException ex) {
@@ -348,7 +352,8 @@ public class Shib implements java.io.Serializable {
         } else {
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("shib.createUser.fail"));
         }
-        return getPrettyFacesHomePageString(true);
+        logger.log(Level.INFO, "{0}, {1}, {2}, {3}", new Object[]{"confirmAndCreateAccount()", au.getIdentifier(), au.getEmail(), au.getAffiliation()});
+        return getPrettyFacesHomePageString(true, au.getAffiliation());
     }
 
     public String confirmAndConvertAccount() {
@@ -484,27 +489,51 @@ public class Shib implements java.io.Serializable {
      * @todo Like builtin users, Shibboleth should benefit from redirectPage
      * logic per https://github.com/IQSS/dataverse/issues/1551
      */
-    public String getPrettyFacesHomePageString(boolean includeFacetDashRedirect) {
+    public String getPrettyFacesHomePageString(boolean includeFacetDashRedirect, String affiliation) {
+        logger.log(Level.INFO, "{0}, {1}, {2}", new Object[]{redirectPage, includeFacetDashRedirect, affiliation});
+        String alias = getAlias(affiliation);
+        if (alias == null) {
+            alias = getRootDataverseAlias();
+        }
         if (redirectPage != null) {
+            if (redirectPage.contains("dataverse.xhtml") && !redirectPage.contains("alias") && alias != null) {
+                redirectPage = redirectPage + "?alias="  + alias;
+            }
+            logger.log(Level.INFO, "{0}, {1}, {2}, {3}", new Object[]{redirectPage, includeFacetDashRedirect, affiliation, alias});
             return redirectPage;
         }
         String plainHomepageString = "/dataverse.xhtml";
-        String rootDvAlias = getRootDataverseAlias();
         if (includeFacetDashRedirect) {
-            if (rootDvAlias != null) {
-                return plainHomepageString + "?alias="  + rootDvAlias + "&faces-redirect=true";
+            if (alias != null) {
+                logger.log(Level.INFO, "{0}, {1}, {2}", new Object[]{includeFacetDashRedirect, plainHomepageString, "?alias="  + alias + "&faces-redirect=true"});
+                return plainHomepageString + "?alias="  + alias + "&faces-redirect=true";
             } else {
+                logger.log(Level.INFO, "{0}, {1}", new Object[]{includeFacetDashRedirect, plainHomepageString + "?faces-redirect=true"});
                 return  plainHomepageString + "?faces-redirect=true";
             }
-        } else if (rootDvAlias != null) {
+        } else if (alias != null) {
             /**
              * @todo Is there a constant for "/dataverse/" anywhere? I guess
              * we'll just hard-code it here.
              */
-            return "/dataverse/" + rootDvAlias;
+            logger.log(Level.INFO, "{0}, {1}", new Object[]{includeFacetDashRedirect, "/dataverse/" + alias});
+            return "/dataverse/" + alias;
         } else {
+            logger.log(Level.INFO, "{0}, {1}", new Object[]{includeFacetDashRedirect, plainHomepageString});
             return plainHomepageString;
         }
+    }
+
+    private String getAlias(String affiliation) {
+        String alias = null;
+        if (affiliation != null) {
+            alias = affiliationBean.getAlias(affiliation);
+            Dataverse dv = dataverseService.findByAlias(alias);
+            if (dv == null || !dv.isReleased()) {
+                alias = null;
+            }
+        }
+        return alias;
     }
 
     public boolean isInit() {
@@ -592,7 +621,10 @@ public class Shib implements java.io.Serializable {
     }
 
     public void setRedirectPage(String redirectPage) {
+       if(redirectPage != null) {
         this.redirectPage = redirectPage;
     }
+
+}
 
 }

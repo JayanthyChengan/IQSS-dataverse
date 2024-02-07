@@ -8,6 +8,13 @@ import edu.harvard.iq.dataverse.UserServiceBean;
 import edu.harvard.iq.dataverse.api.Admin;
 import edu.harvard.iq.dataverse.authorization.AuthenticationProvider;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
+import edu.harvard.iq.dataverse.authorization.groups.GroupServiceBean;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationGroup;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationGroupProvider;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationGroupServiceBean;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationServiceBean;
+import edu.harvard.iq.dataverse.authorization.groups.impl.ipaddress.IpGroup;
+import edu.harvard.iq.dataverse.authorization.groups.impl.ipaddress.IpGroupProvider;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.engine.command.impl.GrantSuperuserStatusCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.RevokeAllRolesCommand;
@@ -24,10 +31,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jakarta.ejb.EJB;
-import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
+import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.text.Normalizer;
+import java.text.NumberFormat;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @ViewScoped
 @Named("DashboardUsersPage")
@@ -45,6 +67,34 @@ public class DashboardUsersPage implements java.io.Serializable {
     EjbDataverseEngine commandEngine;
     @Inject
     DataverseRequestServiceBean dvRequestService;
+    @Inject
+    GroupServiceBean groupSvc;
+
+
+    @Inject
+    AffiliationServiceBean affiliationServiceBean;
+    @Inject
+    AffiliationGroupServiceBean affiliationGroupServiceBean;
+
+    private String alias = "";
+    private String description = "";
+    private String displayname = "";
+    private String emaildomain = "";
+    private UIInput emaildomainField;
+
+    public enum PageMode {
+        CREATE, EDIT
+    }
+
+    public PageMode getPageMode() {
+        return pageMode;
+    }
+
+    public void setPageMode(PageMode pageMode) {
+        this.pageMode = pageMode;
+    }
+
+    private PageMode pageMode =  PageMode.CREATE;
 
     private static final Logger logger = Logger.getLogger(DashboardUsersPage.class.getCanonicalName());
 
@@ -54,6 +104,7 @@ public class DashboardUsersPage implements java.io.Serializable {
 
     private Pager pager;
     private List<AuthenticatedUser> userList;
+    private List<AffiliationGroup> affiliationGroups = new ArrayList<AffiliationGroup>();
 
     private String searchTerm;
     private String sortField;
@@ -74,6 +125,14 @@ public class DashboardUsersPage implements java.io.Serializable {
         sortingMap.put("authProviderId desc", "dashboard.list_users.tbl_header.authProviderFactoryAliasZA");
         sortingMap.put("superuser",           "dashboard.list_users.tbl_header.superuserAZ");
         sortingMap.put("superuser desc",      "dashboard.list_users.tbl_header.superuserZA");
+    }
+    private AffiliationGroupProvider affGroupProvider;
+    private IpGroupProvider ipGroupProvider;
+
+    @PostConstruct
+    public void setup() {
+        affGroupProvider = groupSvc.getAffiliationGroupProvider();
+        ipGroupProvider = groupSvc.getIpGroupProvider();
     }
 
     public String init() {
@@ -149,6 +208,31 @@ public class DashboardUsersPage implements java.io.Serializable {
         return this.userList;
     }
 
+    public List<AffiliationGroup> getAffiliationGroups() {
+        affiliationGroups = affGroupProvider.getAffiliationGroups();
+        affiliationGroups.sort(AffiliationGroup::compare);
+        return affiliationGroups;
+    }
+
+    public void setAffiliationGroups(List<AffiliationGroup> affiliationGroups) {
+        this.affiliationGroups = affiliationGroups;
+    }
+
+    public List<String> getAffiliationList() {
+        ResourceBundle bundle = BundleUtil.getResourceBundle("affiliation", new Locale("en"));
+        List<String> values = affiliationServiceBean.getValues(bundle);
+        if (affiliationGroups.isEmpty()) {
+            affiliationGroups = affGroupProvider.getAffiliationGroups();
+        }
+        List<String> existing = affiliationGroups.stream().map(a -> a.getDisplayName()).collect(Collectors.toList());
+        values.removeAll(existing);
+        values.sort((String o1, String o2) -> {
+            o1 = Normalizer.normalize(o1, Normalizer.Form.NFD);
+            o2 = Normalizer.normalize(o2, Normalizer.Form.NFD);
+            return o1.compareTo(o2);
+        });
+        return values;
+    }
     /**
      * Pager for when user list exceeds the number of display rows
      * (default: UserListMaker.ITEMS_PER_PAGE)
@@ -189,6 +273,7 @@ public class DashboardUsersPage implements java.io.Serializable {
 
     AuthenticatedUser selectedUserDetached = null; // Note: This is NOT the persisted object!!!!  Don't try to save it, etc.
     AuthenticatedUser selectedUserPersistent = null;  // This is called on the fly and updated
+    AffiliationGroup selectedAffGroupDetached = null;
 
     public void setSelectedUserDetached(AuthenticatedUser user) {
         this.selectedUserDetached = user;
@@ -201,6 +286,29 @@ public class DashboardUsersPage implements java.io.Serializable {
     public void setUserToToggleSuperuserStatus(AuthenticatedUser user) {
         selectedUserDetached = user;
     }
+
+    public void setGroupForDeletion(AffiliationGroup group) {
+        selectedAffGroupDetached = group;
+        selectedAffGroupDetached.setGroupProvider(affGroupProvider);
+    }
+
+    public boolean isAssigned(AffiliationGroup group) {
+        group.setGroupProvider(affGroupProvider);
+        return affGroupProvider.isAssigned(group);
+    }
+
+    public void setGroupForEdit(AffiliationGroup group) {
+        setPageMode(PageMode.EDIT);
+        selectedAffGroupDetached = group;
+        selectedAffGroupDetached.setGroupProvider(affGroupProvider);
+        AffiliationGroup affiliationGroup = affGroupProvider.get(group.getId());
+        alias = affiliationGroup.getPersistedGroupAlias();
+        description = affiliationGroup.getDescription();
+        displayname = affiliationGroup.getDisplayName();
+        emaildomain = affiliationGroup.getEmaildomain();
+        setDisplayname(displayname);
+    }
+
 
     public void saveSuperuserStatus() {
 
@@ -255,11 +363,46 @@ public class DashboardUsersPage implements java.io.Serializable {
         JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dashboard.list_users.removeAll.message.success", Arrays.asList(selectedUserPersistent.getUserIdentifier())));
     }
 
+    public void deleteAffiliationGroup() {
+        try {
+            logger.fine("deleteAffiliationGroup: affiliationGroup id: " + selectedAffGroupDetached.getId());
+            affGroupProvider.deleteGroup(selectedAffGroupDetached);
+        } catch (Exception ex) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dashboard.card.groups.tbl_header.group.delete.message.failure", Arrays.asList(selectedAffGroupDetached.getDisplayName())));
+            return;
+        }
+        JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dashboard.card.groups.tbl_header.group.delete.message.success", Arrays.asList(selectedAffGroupDetached.getDisplayName())));
+    }
+
+    public void save() {
+        AffiliationGroup group = new AffiliationGroup();
+        group.setPersistedGroupAlias(alias);
+        group.setDescription(description);
+        group.setDisplayName(displayname);
+        if (StringUtils.isNotBlank(emaildomain)) {
+            emaildomain = StringUtils.stripStart(emaildomain.trim(), "@");
+            emaildomain = StringUtils.stripEnd(emaildomain.trim(), ",");
+            group.setEmaildomain(emaildomain);
+        }
+        affGroupProvider.store(group);
+    }
+
+    public void edit() {
+        pageMode = PageMode.EDIT;
+    }
+
     public String getConfirmRemoveRolesMessage() {
         if (selectedUserDetached != null) {
             return BundleUtil.getStringFromBundle("dashboard.list_users.tbl_header.roles.removeAll.confirmationText", Arrays.asList(selectedUserDetached.getUserIdentifier()));
         }
         return BundleUtil.getStringFromBundle("dashboard.list_users.tbl_header.roles.removeAll.confirmationText");
+    }
+
+    public String getConfirmRemoveAffiliationGroupMessage() {
+        if (selectedAffGroupDetached != null) {
+            return BundleUtil.getStringFromBundle("dashboard.card.groups.tbl_header.group.delete.confirmationText", Arrays.asList(selectedAffGroupDetached.getDisplayName()));
+        }
+        return BundleUtil.getStringFromBundle("dashboard.card.groups.tbl_header.group.delete.confirmationText");
     }
 
     public String getAuthProviderFriendlyName(String authProviderId) {
@@ -280,5 +423,102 @@ public class DashboardUsersPage implements java.io.Serializable {
 
     public Map<String, String> getSortingMap() {
         return sortingMap;
+    }
+
+    public Long getAffiliationsCount() {
+        return affGroupProvider.getAffiliationGroupsCount();
+    }
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+}
+
+
+    public String getDisplayname() {
+        return displayname;
+    }
+
+    public void setDisplayname(String displayname) {
+        this.displayname = displayname;
+    }
+
+    public void validateAlias(FacesContext context, UIComponent component, Object value) {
+        Object oldValue = ((UIInput) component).getValue();
+        if (oldValue == null || value.toString().equalsIgnoreCase(oldValue.toString()) ) {
+            return;
+        }
+        String alias = (String) value;
+        AffiliationGroup affiliationGroup = affGroupProvider.findByAlias(alias);
+        if (affiliationGroup != null && affiliationGroup.getPersistedGroupAlias().toLowerCase().equalsIgnoreCase(alias.toLowerCase())) {
+            ((UIInput) component).setValid(false);
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Duplicate Affiliation Group.", null);
+            context.addMessage(component.getClientId(context), message);
+        } else {
+            IpGroup ipGroup = ipGroupProvider.get(alias);
+            if (ipGroup != null && ipGroup.getPersistedGroupAlias().toLowerCase().equalsIgnoreCase(alias.toLowerCase())) {
+                ((UIInput) component).setValid(false);
+                FacesMessage message = new FacesMessage("Aliases must be unique across Affiliation Groups & IP Groups.");
+                context.addMessage(component.getClientId(context), message);
+            }
+        }
+    }
+
+    public void validateEmailDomain(FacesContext context, UIComponent component, Object value) {
+        Object oldValue = ((UIInput) component).getValue();
+        if (oldValue == null || value.toString().equalsIgnoreCase(oldValue.toString()) ) {
+            return;
+        }
+        String emailFieldValue = ((String) value).trim();
+        List<String> emailDomainList = Arrays.asList(emailFieldValue.split("\\s*,\\s*"));
+        emailDomainList.forEach(emaildomain -> {
+            emaildomain = StringUtils.stripStart(emaildomain, "@");
+            if (!isValidEmailDomain(emaildomain)) {
+                ((UIInput) component).setValid(false);
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Invalid email domain: "+emaildomain, null);
+                context.addMessage(component.getClientId(context), message);
+            }
+        });
+    }
+
+    private boolean isValidEmailDomain(String emailStr) {
+        Pattern VALID_EMAIL_DOMAIN_REGEX = Pattern.compile("^[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = VALID_EMAIL_DOMAIN_REGEX.matcher(emailStr);
+        return matcher.find();
+    }
+
+    public void reset() {
+        alias = "";
+        displayname = "";
+        description = "";
+        emaildomain = "";
+        setPageMode(PageMode.CREATE);
+    }
+
+    public String getEmaildomain() {
+        return emaildomain;
+    }
+
+    public void setEmaildomain(String emaildomain) {
+        this.emaildomain = emaildomain;
+    }
+
+    public UIInput getEmaildomainField() {
+        return emaildomainField;
+    }
+
+    public void setEmaildomainField(UIInput emaildomainField) {
+        this.emaildomainField = emaildomainField;
     }
 }

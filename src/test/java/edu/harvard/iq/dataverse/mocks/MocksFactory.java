@@ -13,9 +13,11 @@ import edu.harvard.iq.dataverse.FileMetadata;
 import edu.harvard.iq.dataverse.MetadataBlock;
 import edu.harvard.iq.dataverse.authorization.DataverseRole;
 import edu.harvard.iq.dataverse.authorization.Permission;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationGroup;
 import edu.harvard.iq.dataverse.authorization.groups.impl.explicit.ExplicitGroup;
 import edu.harvard.iq.dataverse.authorization.groups.impl.explicit.ExplicitGroupProvider;
 import edu.harvard.iq.dataverse.authorization.groups.impl.ipaddress.ip.IpAddress;
+import edu.harvard.iq.dataverse.authorization.groups.impl.ipaddress.IpGroup;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.GuestUser;
 import edu.harvard.iq.dataverse.authorization.users.User;
@@ -240,5 +242,21 @@ public class MocksFactory {
     
     public static ExplicitGroup makeExplicitGroup( ExplicitGroupProvider prv ) {
         return makeExplicitGroup(null, prv);
+    }
+
+    public static IpGroup makeIpGroup() {
+        IpGroup ipGroup = new IpGroup();
+        ipGroup.setId(1L);
+        ipGroup.setDisplayName("University of Toronto");
+        ipGroup.setPersistedGroupAlias("toronto");
+        return ipGroup;
+    }
+
+    public static AffiliationGroup makeAffiliationGroup() {
+        AffiliationGroup affGroup = new AffiliationGroup();
+        affGroup.setId(1L);
+        affGroup.setDisplayName("University of Toronto");
+        affGroup.setPersistedGroupAlias("toronto");
+        return affGroup;
     }
 }

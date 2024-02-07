@@ -1268,7 +1268,7 @@ public class ImportDDIServiceBean {
     private void processSerStmt(XMLStreamReader xmlr, MetadataBlockDTO citation) throws XMLStreamException {
         FieldDTO seriesInformation = null;
         FieldDTO seriesName = null;
-        for (int event = xmlr.next(); event != XMLStreamConstants.END_DOCUMENT; event = xmlr.next()) {            
+        for (int event = xmlr.next(); event != XMLStreamConstants.END_DOCUMENT; event = xmlr.next()) {
             if (event == XMLStreamConstants.START_ELEMENT) {
                 if (xmlr.getLocalName().equals("serInfo")) {
                      seriesInformation = FieldDTO.createPrimitiveFieldDTO("seriesInformation", parseText(xmlr));
@@ -1284,7 +1284,7 @@ public class ImportDDIServiceBean {
                     return;
                 }
             }
-        }     
+        }
     }
 
     private void processDistStmt(XMLStreamReader xmlr, MetadataBlockDTO citation) throws XMLStreamException {
@@ -1354,7 +1354,7 @@ public class ImportDDIServiceBean {
                 } else if (xmlr.getLocalName().equals("prodDate")) {
                     citation.getFields().add(FieldDTO.createPrimitiveFieldDTO("productionDate", parseDate(xmlr, "prodDate")));
                 } else if (xmlr.getLocalName().equals("prodPlac")) {
-                    prodPlac.add(parseText(xmlr));
+                    prodPlac.add(parseText(xmlr, "prodPlac"));
                 } else if (xmlr.getLocalName().equals("software")) {
                     HashSet<FieldDTO> set = new HashSet<>();
                     addToSet(set,"softwareVersion", xmlr.getAttributeValue(null, "version"));
@@ -1400,7 +1400,7 @@ public class ImportDDIServiceBean {
        MetadataBlockDTO citation = datasetDTO.getDatasetVersion().getMetadataBlocks().get("citation");
        List<HashSet<FieldDTO>> otherIds = new ArrayList<>();
        List<String> altTitles = new ArrayList<>();
-       
+
        for (int event = xmlr.next(); event != XMLStreamConstants.END_DOCUMENT; event = xmlr.next()) {
             if (event == XMLStreamConstants.START_ELEMENT) {
                 if (xmlr.getLocalName().equals("titl")) {
