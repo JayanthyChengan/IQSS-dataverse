@@ -655,7 +655,7 @@
             "typeName": "series",
             "multiple": true,
             "typeClass": "compound",
-            "value": [ 
+            "value": [
               {
 		"seriesName": {
                   "typeName": "seriesName",

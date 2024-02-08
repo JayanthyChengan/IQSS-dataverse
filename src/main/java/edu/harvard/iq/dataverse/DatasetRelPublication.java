@@ -6,6 +6,7 @@
 
 package edu.harvard.iq.dataverse;
 
+import edu.harvard.iq.dataverse.util.BundleUtil;
 
 /**
  *
@@ -80,6 +81,14 @@ public class DatasetRelPublication {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getLocaleTitle() {
+        return BundleUtil.getStringFromBundle("dataset.relpublication.title");
+    }
+
+    public String getLocaleDescription() {
+        return BundleUtil.getStringFromBundle("dataset.relpublication.description");
     }
 
      public boolean isEmpty() {

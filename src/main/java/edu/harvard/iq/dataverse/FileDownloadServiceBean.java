@@ -365,6 +365,10 @@ public class FileDownloadServiceBean implements java.io.Serializable {
                 dataFile = guestbookResponse.getDataFile();
             }
         }
+        //For tools to get the dataset and datasetversion ids, we need a full DataFile object (not a findCheapAndEasy() copy)
+        if(dataFile.getFileMetadata()==null) {
+            dataFile=datafileService.find(dataFile.getId());
+        }
         String localeCode = session.getLocaleCode();
         ExternalToolHandler externalToolHandler = new ExternalToolHandler(externalTool, dataFile, apiToken, fmd, localeCode);
         // Persist the name of the tool (i.e. "Data Explorer", etc.)

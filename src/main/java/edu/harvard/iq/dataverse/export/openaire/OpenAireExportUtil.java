@@ -3,6 +3,7 @@ package edu.harvard.iq.dataverse.export.openaire;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.List;
 
 import jakarta.json.JsonObject;
 import javax.xml.stream.XMLOutputFactory;
@@ -248,7 +249,7 @@ public class OpenAireExportUtil {
                             if (StringUtils.isNotBlank(creatorName)) {
                                 creator_check = writeOpenTag(xmlw, "creators", creator_check);
                                 xmlw.writeStartElement("creator"); // <creator>
-                                
+
                                 Map<String, String> creator_map = new HashMap<String, String>();
                                 JsonObject creatorObj = PersonOrOrgUtil.getPersonOrOrganization(creatorName, false,
                                         StringUtils.containsIgnoreCase(nameIdentifierScheme, "orcid"));

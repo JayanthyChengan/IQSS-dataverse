@@ -13,6 +13,8 @@ import edu.harvard.iq.dataverse.authorization.exceptions.AuthenticationFailedExc
 import edu.harvard.iq.dataverse.authorization.groups.impl.explicit.ExplicitGroup;
 import edu.harvard.iq.dataverse.authorization.groups.impl.explicit.ExplicitGroupServiceBean;
 import edu.harvard.iq.dataverse.authorization.providers.AuthenticationProviderFactory;
+import edu.harvard.iq.dataverse.authorization.providers.AuthenticationProviderRow;
+import edu.harvard.iq.dataverse.authorization.groups.impl.affiliation.AffiliationServiceBean;
 import edu.harvard.iq.dataverse.authorization.providers.builtin.BuiltinAuthenticationProvider;
 import edu.harvard.iq.dataverse.authorization.providers.builtin.BuiltinUser;
 import edu.harvard.iq.dataverse.authorization.providers.builtin.BuiltinUserServiceBean;
@@ -45,24 +47,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.ResourceBundle;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import jakarta.annotation.PostConstruct;
-import jakarta.ejb.EJB;
-import jakarta.ejb.EJBException;
-import jakarta.ejb.Stateless;
-import jakarta.inject.Named;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.NonUniqueResultException;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
-import jakarta.persistence.TypedQuery;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.ejb.EJBException;
+import javax.ejb.Stateless;
+import javax.ejb.Singleton;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * AuthenticationService is for general authentication-related operations.
@@ -124,7 +131,10 @@ public class AuthenticationServiceBean {
 
     @EJB
     PrivateUrlServiceBean privateUrlService;
- 
+
+    @Inject
+    AffiliationServiceBean affiliationBean;
+
     @PersistenceContext(unitName = "VDCNet-ejbPU")
     private EntityManager em;
         
@@ -604,7 +614,7 @@ public class AuthenticationServiceBean {
         // set account creation time & initial login time (same timestamp)
         authenticatedUser.setCreatedTime(new Timestamp(new Date().getTime()));
         authenticatedUser.setLastLoginTime(authenticatedUser.getCreatedTime());
-        
+        saveAffiliationInEnglish(userDisplayInfo);
         authenticatedUser.applyDisplayInfo(userDisplayInfo);
 
         // we have no desire for leading or trailing whitespace in identifiers
@@ -646,7 +656,7 @@ public class AuthenticationServiceBean {
         
         actionLogSvc.log( new ActionLogRecord(ActionLogRecord.ActionType.Auth, "createUser")
             .setInfo(authenticatedUser.getIdentifier()));
-        
+
         authenticatedUser.initialize();
 
         return authenticatedUser;
@@ -664,6 +674,8 @@ public class AuthenticationServiceBean {
     }
     
     public AuthenticatedUser updateAuthenticatedUser(AuthenticatedUser user, AuthenticatedUserDisplayInfo userDisplayInfo) {
+        user.setLocalizedAffiliation(userDisplayInfo.getAffiliation());
+        saveAffiliationInEnglish(userDisplayInfo);
         user.applyDisplayInfo(userDisplayInfo);
         user.updateEmailConfirmedToNow();
         actionLogSvc.log( new ActionLogRecord(ActionLogRecord.ActionType.Auth, "updateUser")
@@ -739,6 +751,14 @@ public class AuthenticationServiceBean {
         }
         AuthenticatedUser shibUser = lookupUser(shibProviderId, perUserShibIdentifier);
         if (shibUser != null) {
+            ConfirmEmailData confirmEmailData = confirmEmailService.findSingleConfirmEmailDataByUser(shibUser);
+            if (confirmEmailData != null) {
+                em.remove(confirmEmailData);
+            }
+            long nowInMilliseconds = new Date().getTime();
+            Timestamp emailConfirmed = new Timestamp(nowInMilliseconds);
+            shibUser.setEmailConfirmed(emailConfirmed);
+            em.merge(shibUser);
             return shibUser;
         }
         return null;
@@ -939,10 +959,18 @@ public class AuthenticationServiceBean {
         return query.getResultList();
     }
 
+    private void saveAffiliationInEnglish(AuthenticatedUserDisplayInfo userDisplayInfo) {
+        ResourceBundle bundle = BundleUtil.getResourceBundle("affiliation");
+        String language = bundle.getLocale().getLanguage();
+        if (StringUtils.isNotBlank(language) && !language.equalsIgnoreCase("en")) {
+            ResourceBundle enBundle = BundleUtil.getResourceBundle("affiliation", new Locale("en"));
+            affiliationBean.convertAffiliation(userDisplayInfo, bundle, enBundle);
+        }
+    }
     /**
      * This method gets a valid api token for an AuthenticatedUser, creating a new
      * token if one doesn't exist or if the token is expired.
-     * 
+     *
      * @param user
      * @return
      */
@@ -970,7 +998,7 @@ public class AuthenticationServiceBean {
             apiToken = getValidApiTokenForAuthenticatedUser((AuthenticatedUser) user);
         } else if (user instanceof PrivateUrlUser) {
             PrivateUrlUser privateUrlUser = (PrivateUrlUser) user;
-            
+
             PrivateUrl privateUrl = privateUrlService.getPrivateUrlFromDatasetId(privateUrlUser.getDatasetId());
             apiToken = new ApiToken();
             apiToken.setTokenString(privateUrl.getToken());

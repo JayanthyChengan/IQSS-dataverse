@@ -698,7 +698,18 @@ public class Dataverse extends DvObjectContainer {
     }
 
     public void setAlias(String alias) {
-        this.alias = alias;
+        if(alias.equalsIgnoreCase("jonquiere") ||
+                alias.equalsIgnoreCase("montmorency") ||
+                alias.equalsIgnoreCase("levis") ||
+                alias.equalsIgnoreCase("cdc") ||
+                alias.equalsIgnoreCase("maisonneuve")
+        )
+        {
+            this.alias = "cegep";
+        }
+        else {
+            this.alias = alias;
+        }
     }
 
     public String getDescription() {
