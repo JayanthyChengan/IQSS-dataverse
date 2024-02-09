@@ -107,9 +107,15 @@ public class SendFeedbackDialog implements java.io.Serializable {
         op1 = Long.valueOf(random.nextInt(10));
         op2 = Long.valueOf(random.nextInt(10));
         userSum = null;
-        String systemEmail = settingsService.getValueForKey(SettingsServiceBean.Key.SystemEmail);
-        systemAddress = MailUtil.parseSystemAddress(systemEmail);
 
+        // to be tested JC - old code
+        //String systemEmail = settingsService.getValueForKey(SettingsServiceBean.Key.SystemEmail);
+        //systemAddress = MailUtil.parseSystemAddress(systemEmail);
+
+        String supportEmail = JvmSettings.SUPPORT_EMAIL.lookupOptional().orElse(settingsService.getValueForKey(SettingsServiceBean.Key.SystemEmail));
+        systemAddress = MailUtil.parseSystemAddress(supportEmail);
+
+        // JC old code
         dataverseUserPage.supportMode() ;
     }
 
@@ -226,6 +232,10 @@ public class SendFeedbackDialog implements java.io.Serializable {
         String installationBrandName = BrandingUtil.getInstallationBrandName();
         String supportTeamName = BrandingUtil.getSupportTeamName(systemAddress);
         List<Feedback> feedbacks = FeedbackUtil.gatherFeedback(recipient, dataverseSession, messageAffiliation + " - " + messageSubject  , userMessage, systemAddress, userEmail, systemConfig.getDataverseSiteUrl(), installationBrandName, supportTeamName);
+
+        // to be tested JC - new code
+        //Feedback feedback = FeedbackUtil.gatherFeedback(feedbackTarget, dataverseSession, messageSubject, userMessage, systemAddress, userEmail, systemConfig.getDataverseSiteUrl(), installationBrandName, supportTeamName, ccSupport());
+        //if (feedback==null) {
 
         if (feedbacks.isEmpty()) {
             logger.warning("No feedback has been sent!");
