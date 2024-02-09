@@ -3,14 +3,14 @@ package edu.harvard.iq.dataverse.authorization.groups.impl.affiliation;
 import edu.harvard.iq.dataverse.authorization.RoleAssignee;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.mocks.MocksFactory;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Timestamp;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -18,7 +18,7 @@ public class AffiliationGroupProviderTest {
 
     private AffiliationGroupServiceBean mockAffiliationGroupService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         mockAffiliationGroupService = mock(AffiliationGroupServiceBean.class);
     }

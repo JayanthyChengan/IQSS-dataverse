@@ -1,7 +1,7 @@
 package edu.harvard.iq.dataverse.authorization.groups.impl.affiliation;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AffiliationGroupTest {
 
@@ -11,10 +11,10 @@ public class AffiliationGroupTest {
         AffiliationGroup group2 = new AffiliationGroup();
         group1.setDisplayName("École de technologie supérieure");
         group2.setDisplayName("École nationale d’administration publique");
-        Assert.assertEquals(-10, group1.compare(group2));
+        assertEquals(-10, group1.compare(group2));
         group1.setDisplayName("Université du Québec à Trois-Rivières");
         group2.setDisplayName("Université du Québec en Abitibi-Témiscamingue");
-        Assert.assertEquals(-4, group1.compare(group2));
-        Assert.assertEquals(4, group2.compare(group1));
+        assertEquals(-4, group1.compare(group2));
+        assertEquals(4, group2.compare(group1));
     }
 }
