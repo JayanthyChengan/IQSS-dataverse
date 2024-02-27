@@ -673,10 +673,12 @@ public class Dataverse extends DvObjectContainer {
                 alias.equalsIgnoreCase("montmorency") ||
                 alias.equalsIgnoreCase("levis") ||
                 alias.equalsIgnoreCase("cdc") ||
-                alias.equalsIgnoreCase("maisonneuve")
+                alias.equalsIgnoreCase("maisonneuve")||
+                alias.equalsIgnoreCase("federationcegeps") ||
+                alias.equalsIgnoreCase("cegepthetford")
         )
         {
-            this.alias = "cegep";
+            this.alias = "federationcegeps";
         }
         else {
             this.alias = alias;

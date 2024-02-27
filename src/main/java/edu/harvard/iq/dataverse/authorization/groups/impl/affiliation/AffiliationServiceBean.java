@@ -73,7 +73,8 @@ public class AffiliationServiceBean implements Serializable {
                         alias.equalsIgnoreCase("levis") ||
                         alias.equalsIgnoreCase("cdc") ||
                         alias.equalsIgnoreCase("maisonneuve") ||
-                        alias.equalsIgnoreCase("federationcegeps")
+                        alias.equalsIgnoreCase("federationcegeps") ||
+                        alias.equalsIgnoreCase("cegepthetford")
                 )
                 {
                     return "federationcegeps";
