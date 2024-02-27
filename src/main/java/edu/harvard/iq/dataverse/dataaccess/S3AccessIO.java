@@ -990,8 +990,8 @@ public class S3AccessIO<T extends DvObject> extends StorageIO<T> {
         GeneratePresignedUrlRequest generatePresignedUrlRequest = 
                 new GeneratePresignedUrlRequest(bucketName, key).withMethod(HttpMethod.PUT).withExpiration(expiration);
         //Require user to add this header to indicate a temporary file
-        generatePresignedUrlRequest.putCustomRequestHeader(Headers.S3_TAGGING, "dv-state=temp");
-        
+        // JC commented the below line due to CORS issue
+        //generatePresignedUrlRequest.putCustomRequestHeader(Headers.S3_TAGGING, "dv-state=temp");
         URL presignedUrl; 
         try {
             presignedUrl = s3.generatePresignedUrl(generatePresignedUrlRequest);
