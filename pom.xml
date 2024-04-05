@@ -27,7 +27,7 @@
         <packaging.type>war</packaging.type>
         
         <reload4j.version>1.2.18.4</reload4j.version>
-        <flyway.version>9.21.2</flyway.version>
+        <flyway.version>9.22.1</flyway.version>
         <jhove.version>1.20.1</jhove.version>
         <poi.version>5.2.1</poi.version>
         <tika.version>2.4.1</tika.version>
@@ -51,13 +51,24 @@
                 <artifactId>abdera-i18n</artifactId>
                 <version>1.1.3</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.abdera</groupId>
+                <artifactId>abdera-parser</artifactId>
+                <version>1.1.3</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.geronimo.specs</groupId>
+                        <artifactId>geronimo-javamail_1.4_spec</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <!-- Declare any DIRECT dependencies here.
          In case the dependency is both transitive and direct (e. g. some common lib for logging),
          manage the version above and add the direct dependency here WITHOUT version tag, too.
     -->
-    <!-- TODO: Housekeeping is utterly needed. -->
+    <!-- TODO: Housekeeping is utterly needed! -->
     <dependencies>
 
         <!-- This dependency ensures the lib is on the classpath. That way, anything coming from
@@ -180,6 +191,11 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.eclipse.microprofile.metrics</groupId>
+            <artifactId>microprofile-metrics-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
             <scope>provided</scope>
@@ -210,6 +226,18 @@
             <scope>provided</scope>
         </dependency>
         
+        <!-- JSON-B -->
+        <dependency>
+            <groupId>jakarta.json.bind</groupId>
+            <artifactId>jakarta.json.bind-api</artifactId>
+        </dependency>
+        <!-- Rope in an implementation for unit tests - is provided at runtime by appserver -->
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Jakarta Faces & related -->
         <dependency>
             <groupId>org.glassfish</groupId>
@@ -511,6 +539,10 @@
             <artifactId>dataverse-spi</artifactId>
             <version>2.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-api</artifactId>
+        </dependency>
         <!-- TESTING DEPENDENCIES -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -619,7 +651,12 @@
         <dependency>
             <groupId>org.htmlunit</groupId>
             <artifactId>htmlunit</artifactId>
-            <version>3.2.0</version>
+            <version>3.9.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -651,6 +688,7 @@
                     <include>**/firstNames/*.*</include>
                     <include>**/*.xsl</include>
                     <include>**/services/*</include>
+                    <include>**/*.map</include>
                 </includes>
             </resource>
             <resource>
@@ -690,6 +728,7 @@
                 <configuration>
                     <attachClasses>true</attachClasses>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <webappDirectory>${project.build.directory}/${project.artifactId}</webappDirectory>
                     <archive>
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
@@ -880,10 +919,11 @@
                 <skipIntegrationTests>true</skipIntegrationTests>
                 <!-- Once we truly run tests with Testcontainers, this should be switch to "docker", activating ITs -->
                 <packaging.type>docker-build</packaging.type>
-                <postgresql.server.version>13</postgresql.server.version>
+                <postgresql.server.version>16</postgresql.server.version>
             
                 <app.image>gdcc/dataverse:${app.image.tag}</app.image>
                 <app.image.tag>unstable</app.image.tag>
+                <app.skipDeploy>false</app.skipDeploy>
                 <base.image>gdcc/base:${base.image.tag}</base.image>
                 <base.image.tag>unstable</base.image.tag>
                 <conf.image>gdcc/configbaker:${conf.image.tag}</conf.image>
@@ -896,6 +936,7 @@
                 <POSTGRES_VERSION>${postgresql.server.version}</POSTGRES_VERSION>
                 <SOLR_VERSION>${solr.version}</SOLR_VERSION>
                 <DATAVERSE_DB_USER>dataverse</DATAVERSE_DB_USER>
+                <SKIP_DEPLOY>${app.skipDeploy}</SKIP_DEPLOY>
             </properties>
         
             <build>
@@ -981,14 +1022,6 @@
                                         <skip>true</skip>
                                     </run>
                                 </image>
-
-                                <image>
-                                    <name>gdcc/dev_nginx:unstable</name>
-                                    <build>
-                                        <contextDir>${project.basedir}/modules/nginx</contextDir>
-                                    </build>
-                                </image>
-
                             </images>
                             <autoCreateCustomNetworks>true</autoCreateCustomNetworks>
                         </configuration>
