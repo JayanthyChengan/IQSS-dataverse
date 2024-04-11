@@ -697,14 +697,21 @@ public class Dataverse extends DvObjectContainer {
 
         ResourceBundle bundle = BundleUtil.getResourceBundle("affiliation", new Locale("en"));
         String newKey = "affiliation_"+alias+"_federationcegeps";
-        String isitCegep = bundle.getString(newKey);
-        if(isitCegep.equalsIgnoreCase("true"))
-        {
-            this.alias = "federationcegeps";
+        try {
+            String isitCegep = bundle.getString(newKey);
+            if(isitCegep.equalsIgnoreCase("true"))
+            {
+                this.alias = "federationcegeps";
+            }
+            else {
+                this.alias = alias;
+            }
         }
-        else {
+        catch(Exception e)
+        {
             this.alias = alias;
         }
+
 
 
     /*

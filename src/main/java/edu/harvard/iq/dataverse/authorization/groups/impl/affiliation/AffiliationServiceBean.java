@@ -69,15 +69,18 @@ public class AffiliationServiceBean implements Serializable {
             if (value.equalsIgnoreCase(userAffiliation)) {
                 String alias = next.substring(next.indexOf(".") + 1);
                 String newKey = next.replace(".","_")+"_federationcegeps";
-                String isitCegep = bundle.getString(newKey);
-                if(isitCegep.equalsIgnoreCase("true"))
+                try {
+                    String isitCegep = bundle.getString(newKey);
+                    if (isitCegep.equalsIgnoreCase("true")) {
+                        return "federationcegeps";
+                    } else {
+                        return alias;
+                    }
+                }catch (Exception e)
                 {
-                    return "federationcegeps";
+
                 }
-                else
-                {
-                    return alias;
-                }
+                return alias;
                 /*
                 if(alias.equalsIgnoreCase("jonquiere") ||
                         alias.equalsIgnoreCase("montmorency") ||
