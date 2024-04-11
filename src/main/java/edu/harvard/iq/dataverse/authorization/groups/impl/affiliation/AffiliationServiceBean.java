@@ -68,12 +68,24 @@ public class AffiliationServiceBean implements Serializable {
             String value = bundle.getString(next);
             if (value.equalsIgnoreCase(userAffiliation)) {
                 String alias = next.substring(next.indexOf(".") + 1);
+                String newKey = next.replace(".","_")+"_federationcegeps";
+                String isitCegep = bundle.getString(newKey);
+                if(isitCegep.equalsIgnoreCase("true"))
+                {
+                    return "federationcegeps";
+                }
+                else
+                {
+                    return alias;
+                }
+                /*
                 if(alias.equalsIgnoreCase("jonquiere") ||
                         alias.equalsIgnoreCase("montmorency") ||
                         alias.equalsIgnoreCase("levis") ||
                         alias.equalsIgnoreCase("cdc") ||
                         alias.equalsIgnoreCase("maisonneuve") ||
-                        alias.equalsIgnoreCase("federationcegeps")
+                        alias.equalsIgnoreCase("federationcegeps") ||
+                        alias.equalsIgnoreCase("cegepthetford")
                 )
                 {
                     return "federationcegeps";
@@ -82,6 +94,7 @@ public class AffiliationServiceBean implements Serializable {
                 {
                     return alias;
                 }
+                */
             }
         }
         logger.log(Level.SEVERE, "Unable to find alias for {0}", userAffiliation);

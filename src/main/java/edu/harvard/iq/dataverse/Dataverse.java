@@ -7,12 +7,8 @@ import edu.harvard.iq.dataverse.storageuse.StorageUse;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -698,18 +694,35 @@ public class Dataverse extends DvObjectContainer {
     }
 
     public void setAlias(String alias) {
-        if(alias.equalsIgnoreCase("jonquiere") ||
-                alias.equalsIgnoreCase("montmorency") ||
-                alias.equalsIgnoreCase("levis") ||
-                alias.equalsIgnoreCase("cdc") ||
-                alias.equalsIgnoreCase("maisonneuve")
-        )
+
+        ResourceBundle bundle = BundleUtil.getResourceBundle("affiliation", new Locale("en"));
+        String newKey = "affiliation_"+alias+"_federationcegeps";
+        String isitCegep = bundle.getString(newKey);
+        if(isitCegep.equalsIgnoreCase("true"))
         {
-            this.alias = "cegep";
+            this.alias = "federationcegeps";
         }
         else {
             this.alias = alias;
         }
+
+
+    /*
+        if(alias.equalsIgnoreCase("jonquiere") ||
+                alias.equalsIgnoreCase("montmorency") ||
+                alias.equalsIgnoreCase("levis") ||
+                alias.equalsIgnoreCase("cdc") ||
+                alias.equalsIgnoreCase("maisonneuve")||
+                alias.equalsIgnoreCase("federationcegeps") ||
+                alias.equalsIgnoreCase("cegepthetford")
+        )
+        {
+            this.alias = "federationcegeps";
+        }
+        else {
+            this.alias = alias;
+        }
+        */
     }
 
     public String getDescription() {
