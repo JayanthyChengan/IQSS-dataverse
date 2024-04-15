@@ -225,6 +225,7 @@ public class DashboardUsersPage implements java.io.Serializable {
             affiliationGroups = affGroupProvider.getAffiliationGroups();
         }
         List<String> existing = affiliationGroups.stream().map(a -> a.getDisplayName()).collect(Collectors.toList());
+        values.stream().filter(str -> !str.equals("true")); // Skip "true"
         values.removeAll(existing);
         values.sort((String o1, String o2) -> {
             o1 = Normalizer.normalize(o1, Normalizer.Form.NFD);
