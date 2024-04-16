@@ -221,18 +221,23 @@ public class DashboardUsersPage implements java.io.Serializable {
     public List<String> getAffiliationList() {
         ResourceBundle bundle = BundleUtil.getResourceBundle("affiliation", new Locale("en"));
         List<String> values = affiliationServiceBean.getValues(bundle);
+
+        List<String> filteredList = values.stream()
+                .filter(str -> !str.equals("true")) // Skip "true"
+                .collect(Collectors.toList()); // Collect into a new list
+
+
         if (affiliationGroups.isEmpty()) {
             affiliationGroups = affGroupProvider.getAffiliationGroups();
         }
         List<String> existing = affiliationGroups.stream().map(a -> a.getDisplayName()).collect(Collectors.toList());
-        values.stream().filter(str -> !str.equals("true")); // Skip "true"
-        values.removeAll(existing);
-        values.sort((String o1, String o2) -> {
+        filteredList.removeAll(existing);
+        filteredList.sort((String o1, String o2) -> {
             o1 = Normalizer.normalize(o1, Normalizer.Form.NFD);
             o2 = Normalizer.normalize(o2, Normalizer.Form.NFD);
             return o1.compareTo(o2);
         });
-        return values;
+        return filteredList;
     }
     /**
      * Pager for when user list exceeds the number of display rows

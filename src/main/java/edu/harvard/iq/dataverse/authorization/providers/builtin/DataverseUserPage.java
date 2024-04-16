@@ -835,9 +835,10 @@ public class DataverseUserPage implements java.io.Serializable {
     public List<String> getAffiliationList() {
         affiliationList.clear();
         ResourceBundle bundle = BundleUtil.getResourceBundle("affiliation");
-        affiliationList = affiliationServiceBean.getValues(bundle);
 
-        affiliationList.stream().filter(str -> !str.equals("true")); // Skip "true"
+        affiliationList = affiliationServiceBean.getValues(bundle).stream()
+                .filter(str -> !str.equals("true")) // Skip "true"
+                .collect(Collectors.toList()); // Collect into a new list
 
         affiliationList.sort((String o1, String o2) -> {
             o1 = Normalizer.normalize(o1, Normalizer.Form.NFD);
