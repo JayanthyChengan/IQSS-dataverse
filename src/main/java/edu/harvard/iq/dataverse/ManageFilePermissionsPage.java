@@ -524,7 +524,13 @@ public class ManageFilePermissionsPage implements java.io.Serializable {
             );
             JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("permission.roleAssignedToFor", args));
         } catch (PermissionException ex) {
-            JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeAssigned"), BundleUtil.getStringFromBundle("permission.permissionsMissing", Arrays.asList(ex.getRequiredPermissions().toString())));
+            List<String> retlist = new ArrayList<>();
+            for (String s : Arrays.asList(ex.getRequiredPermissions().toString())) {
+                logger.log(Level.INFO, " Internationalization : " + ex.getMessage(), ex);
+                retlist.add(BundleUtil.getStringFromBundle("permission."+s+".label",BundleUtil.getCurrentLocale()));
+            }
+
+            JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeAssigned"), BundleUtil.getStringFromBundle("permission.permissionsMissing", retlist));
             return false;
         } catch (CommandException ex) {
             //JH.addMessage(FacesMessage.SEVERITY_FATAL, "The role was not able to be assigned.");
