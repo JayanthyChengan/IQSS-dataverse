@@ -195,7 +195,8 @@ public class ManagePermissionsPage implements java.io.Serializable {
             RoleAssignee assignee = roleAssigneeService.getRoleAssignee(ra.getAssigneeIdentifier());
             notifyRoleChange(assignee, UserNotification.Type.REVOKEROLE);
         } catch (PermissionException ex) {
-            JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeRemoved"), BundleUtil.getStringFromBundle("permission.permissionsMissing", Arrays.asList(ex.getRequiredPermissions().toString())));
+            String permissionslocalized = getlocalizedPermissions(ex.getRequiredPermissions().toString());
+            JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeRemoved"), BundleUtil.getStringFromBundle("permission.permissionsMissing", Arrays.asList(permissionslocalized)));
         } catch (CommandException ex) {
             JH.addMessage(FacesMessage.SEVERITY_FATAL, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeRemoved"));
             logger.log(Level.SEVERE, "Error removing role assignment: " + ex.getMessage(), ex);
@@ -354,8 +355,9 @@ public class ManagePermissionsPage implements java.io.Serializable {
                     commandEngine.submit(new UpdateDataverseDefaultContributorRoleCommand(defaultRole, dvRequestService.getDataverseRequest(), dv));
                     JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("permission.defaultPermissionDataverseUpdated"));
                 } catch (PermissionException ex) {
+                    String permissionslocalized = getlocalizedPermissions(ex.getRequiredPermissions().toString());
                     JH.addMessage(FacesMessage.SEVERITY_ERROR,  BundleUtil.getStringFromBundle("permission.CannotAssigntDefaultPermissions"),
-                            BundleUtil.getStringFromBundle("permission.permissionsMissing" , Arrays.asList(ex.getRequiredPermissions().toString())));
+                            BundleUtil.getStringFromBundle("permission.permissionsMissing" , Arrays.asList(permissionslocalized)));
 
                 } catch (CommandException ex) {
                     JH.addMessage(FacesMessage.SEVERITY_FATAL, BundleUtil.getStringFromBundle("permission.CannotAssigntDefaultPermissions"));
@@ -536,7 +538,8 @@ public class ManagePermissionsPage implements java.io.Serializable {
             }
 
         } catch (PermissionException ex) {
-            JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeAssigned"), BundleUtil.getStringFromBundle("permission.permissionsMissing", Arrays.asList(ex.getRequiredPermissions().toString())));
+            String permissionslocalized = getlocalizedPermissions(ex.getRequiredPermissions().toString());
+            JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeAssigned"), BundleUtil.getStringFromBundle("permission.permissionsMissing", Arrays.asList(permissionslocalized)));
         } catch (CommandException ex) {
             List<String> args = Arrays.asList(
                     r.getName(),
@@ -550,6 +553,18 @@ public class ManagePermissionsPage implements java.io.Serializable {
         }
 
         showAssignmentMessages();
+    }
+
+    private String getlocalizedPermissions(String requiredPermission) {
+        List<String> retlist = new ArrayList<>();
+
+        List<String> list = new ArrayList<>(Arrays.asList(requiredPermission.split(",")));
+        for (String idAsString : list) {
+            idAsString = idAsString.replaceAll("\\s", "").replace("[","").replace("]","");
+            retlist.add(BundleUtil.getStringFromBundle("permission."+idAsString+".label",BundleUtil.getCurrentLocale()));
+        }
+        String output = "[ " + String.join(", ", retlist) +" ]";
+        return output;
     }
 
     /*
@@ -599,7 +614,8 @@ public class ManagePermissionsPage implements java.io.Serializable {
                 setRole(commandEngine.submit(new CreateRoleCommand(role, dvRequestService.getDataverseRequest(), (Dataverse) role.getOwner())));
                 JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("permission.roleWas", Arrays.asList(roleState)));
             } catch (PermissionException ex) {
-                JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotSaved"), BundleUtil.getStringFromBundle("permission.permissionsMissing", Arrays.asList(ex.getRequiredPermissions().toString())));
+                String permissionslocalized = getlocalizedPermissions(ex.getRequiredPermissions().toString());
+                JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotSaved"), BundleUtil.getStringFromBundle("permission.permissionsMissing", Arrays.asList(permissionslocalized)));
             } catch (CommandException ex) {
                 JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotSaved").concat(" " + ex.getMessage()) );
                 logger.log(Level.SEVERE, "Error saving role: " + ex.getMessage(), ex);

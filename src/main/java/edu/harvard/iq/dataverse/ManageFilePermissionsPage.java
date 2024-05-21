@@ -337,7 +337,8 @@ public class ManageFilePermissionsPage implements java.io.Serializable {
             commandEngine.submit(new RevokeRoleCommand(ra, dvRequestService.getDataverseRequest()));
             JsfHelper.addSuccessMessage( BundleUtil.getStringFromBundle("permission.roleWasRemoved" , Arrays.asList(ra.getRole().getName(), roleAssigneeService.getRoleAssignee(ra.getAssigneeIdentifier()).getDisplayInfo().getTitle())));
         } catch (PermissionException ex) {
-            JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeRemoved"), BundleUtil.getStringFromBundle("permission.permissionsMissing" , Arrays.asList(ex.getRequiredPermissions().toString())));
+            String permissionslocalized = getlocalizedPermissions(ex.getRequiredPermissions().toString());
+            JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeRemoved"), BundleUtil.getStringFromBundle("permission.permissionsMissing" , Arrays.asList(permissionslocalized)));
         } catch (CommandException ex) {
             JH.addMessage(FacesMessage.SEVERITY_FATAL, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeRemoved"));
             logger.log(Level.SEVERE, "Error removing role assignment: " + ex.getMessage(), ex);
@@ -524,13 +525,8 @@ public class ManageFilePermissionsPage implements java.io.Serializable {
             );
             JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("permission.roleAssignedToFor", args));
         } catch (PermissionException ex) {
-            List<String> retlist = new ArrayList<>();
-            for (String s : Arrays.asList(ex.getRequiredPermissions().toString())) {
-                logger.log(Level.INFO, " Internationalization : " + ex.getMessage(), ex);
-                retlist.add(BundleUtil.getStringFromBundle("permission."+s+".label",BundleUtil.getCurrentLocale()));
-            }
-
-            JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeAssigned"), BundleUtil.getStringFromBundle("permission.permissionsMissing", retlist));
+            String permissionslocalized = getlocalizedPermissions(ex.getRequiredPermissions().toString());
+            JH.addMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("permission.roleNotAbleToBeAssigned"), BundleUtil.getStringFromBundle("permission.permissionsMissing", Arrays.asList(permissionslocalized)));
             return false;
         } catch (CommandException ex) {
             //JH.addMessage(FacesMessage.SEVERITY_FATAL, "The role was not able to be assigned.");
@@ -574,6 +570,17 @@ public class ManageFilePermissionsPage implements java.io.Serializable {
     }
 
 
+    private String getlocalizedPermissions(String requiredPermission) {
+        List<String> retlist = new ArrayList<>();
+
+        List<String> list = new ArrayList<>(Arrays.asList(requiredPermission.split(",")));
+        for (String idAsString : list) {
+            idAsString = idAsString.replaceAll("\\s", "").replace("[","").replace("]","");
+            retlist.add(BundleUtil.getStringFromBundle("permission."+idAsString+".label",BundleUtil.getCurrentLocale()));
+        }
+        String output = "[ " + String.join(", ", retlist) +" ]";
+        return output;
+    }
 
 
     // inner class used fordisplay of role assignments
@@ -601,7 +608,7 @@ public class ManageFilePermissionsPage implements java.io.Serializable {
             this.assigneeDisplayInfo = disInf;
             this.deleted = deleted;
 
-        } 
+        }
         
 
         public RoleAssigneeDisplayInfo getAssigneeDisplayInfo() {
