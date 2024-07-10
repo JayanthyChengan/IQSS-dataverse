@@ -74,6 +74,9 @@ public class MailServiceBean implements java.io.Serializable {
     @EJB
     ConfirmEmailServiceBean confirmEmailService;
 
+   // @Inject
+   // DataverseSession dvsession;
+
     private static final Logger logger = Logger.getLogger(MailServiceBean.class.getCanonicalName());
 
     private static final String charset = "UTF-8";
@@ -117,7 +120,8 @@ public class MailServiceBean implements java.io.Serializable {
             return false;
         }
         InternetAddress systemAddress = optionalAddress.get();
-
+//JC  getStringFromBundle(String key, List<String> arguments, Locale locale)
+       // String localeCode = dvsession.getLocaleCode();
         String body = messageText +
             BundleUtil.getStringFromBundle(isHtmlContent ? "notification.email.closing.html" : "notification.email.closing",
                 List.of(BrandingUtil.getSupportTeamEmailAddress(systemAddress), BrandingUtil.getSupportTeamName(systemAddress)));
@@ -386,6 +390,8 @@ public class MailServiceBean implements java.io.Serializable {
         String dvObjURL;
         String dvObjTypeStr;
         String pattern;
+        //String localeCode = dvsession.getLocaleCode();
+        //logger.info(" JC TESTING localecode in mailservicebean =  "+ localeCode );
 
         switch (userNotification.getType()) {
             case ASSIGNROLE:
@@ -512,7 +518,8 @@ public class MailServiceBean implements java.io.Serializable {
                 return messageText;
             case PUBLISHEDDS:
                 version =  (DatasetVersion) targetObject;
-                pattern = BundleUtil.getStringFromBundle("notification.email.wasPublished");
+                //jc
+                pattern = BundleUtil.getStringFromBundle("notification.email.wasPublished");//, new Locale(localeCode));
                 String[] paramArrayPublishedDataset = {version.getDataset().getDisplayName(), getDatasetLink(version.getDataset()), 
                     version.getDataset().getOwner().getDisplayName(),  getDataverseLink(version.getDataset().getOwner())};
                 messageText += MessageFormat.format(pattern, paramArrayPublishedDataset);
@@ -659,7 +666,7 @@ public class MailServiceBean implements java.io.Serializable {
                         userNotification.getUser().getFirstName(), userNotification.getUser().getFirstName() ));
                 return message;
 
-            case INGESTCOMPLETED:
+            case INGESTCOMPLETED: // JC
                 dataset = (Dataset) targetObject;
                 messageText = BundleUtil.getStringFromBundle("notification.email.greeting.html");
                 String ingestedCompletedMessage = messageText + BundleUtil.getStringFromBundle("notification.ingest.completed", Arrays.asList(

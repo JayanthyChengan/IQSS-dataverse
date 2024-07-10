@@ -263,6 +263,7 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
         
         try {
             // Success! - send notification:
+            //JC
             notifyUsersDatasetPublishStatus(ctxt, dataset, UserNotification.Type.PUBLISHEDDS);
         } catch (Exception e) {
             logger.warning("Failure to send dataset published messages for : " + dataset.getId() + " : " + e.getMessage());
@@ -478,7 +479,22 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
     }
     
     private void notifyUsersDatasetPublishStatus(CommandContext ctxt, DvObject subject, UserNotification.Type type) {
-        
+//JC
+        /*
+        Set<RoleAssignment> roleAssignments = ctxt.roles().rolesAssignments(subject);
+        for (RoleAssignment roleAssignment : roleAssignments) {
+            logger.fine("JC TESTING role assignment on dvObject " + subject.getId() + ": " + roleAssignment.getAssigneeIdentifier());
+            if (roleAssignment.getRole().permissions().contains(Permission.ViewUnpublishedDataset) ||
+                    roleAssignment.getRole().permissions().contains(Permission.DownloadFile))
+            {
+                for (AuthenticatedUser au : ctxt.roleAssignees().getExplicitUsers(ctxt.roleAssignees().getRoleAssignee(roleAssignment.getAssigneeIdentifier())))
+                {
+                    //ctxt.notifications().sendNotification(au,  getTimestamp(), type, getDataset().getLatestVersion().getId());
+                    ctxt.notifications().sendNotificationInNewTransaction(au, getTimestamp(), type, getDataset().getLatestVersion().getId());
+                }
+            }
+        }
+        */
         ctxt.roles().rolesAssignments(subject).stream()
             .filter(  ra -> ra.getRole().permissions().contains(Permission.ViewUnpublishedDataset) || ra.getRole().permissions().contains(Permission.DownloadFile))
             .flatMap( ra -> ctxt.roleAssignees().getExplicitUsers(ctxt.roleAssignees().getRoleAssignee(ra.getAssigneeIdentifier())).stream() )

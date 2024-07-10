@@ -139,7 +139,7 @@ public class BundleUtil {
         return loader;
     }
 
-    public static Locale getCurrentLocale() {
+    public static Locale getCurrentLocale() { // JC
         if (FacesContext.getCurrentInstance() == null) {
             String localeEnvVar = System.getenv().get("LANG");
             if (localeEnvVar != null) {

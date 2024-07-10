@@ -689,6 +689,7 @@ public class DatasetUtil {
     }
 
     public static String getLocaleExternalStatus(String status) {
+        //JC
         String localizedName =  "" ;
         try {
             localizedName = BundleUtil.getStringFromPropertyFile(status.toLowerCase().replace(" ", "_"), "CurationLabels");

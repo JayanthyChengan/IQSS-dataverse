@@ -63,7 +63,7 @@ public class ReturnDatasetToAuthorCommand extends AbstractDatasetCommand<Dataset
         List<AuthenticatedUser> reviewers = ctxt.permissions().getUsersWithPermissionOn(Permission.PublishDataset, savedDataset);
         List<AuthenticatedUser> authors   = ctxt.permissions().getUsersWithPermissionOn(Permission.EditDataset, savedDataset);
         authors.removeAll(reviewers);
-        for (AuthenticatedUser au : authors) {
+        for (AuthenticatedUser au : authors) { //JC
             ctxt.notifications().sendNotification(au, getTimestamp(), UserNotification.Type.RETURNEDDS, savedDataset.getLatestVersion().getId(), comment);
         }
 

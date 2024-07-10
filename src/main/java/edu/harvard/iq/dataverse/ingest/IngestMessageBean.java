@@ -160,7 +160,7 @@ public class IngestMessageBean implements MessageListener {
             }
 
             sbIngestedFiles.append("</ul>");
-
+//JC
             userNotificationService.sendNotification(
                     authenticatedUser,
                     Timestamp.from(Instant.now()),
