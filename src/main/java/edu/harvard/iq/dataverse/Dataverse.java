@@ -407,6 +407,20 @@ public class Dataverse extends DvObjectContainer {
         return dataverseFieldTypeInputLevels;
     }
 
+    public boolean isDatasetFieldTypeRequiredAsInputLevel(Long datasetFieldTypeId) {
+        return dataverseFieldTypeInputLevels.stream()
+                .anyMatch(inputLevel -> inputLevel.getDatasetFieldType().getId().equals(datasetFieldTypeId) && inputLevel.isRequired());
+    }
+
+    public boolean isDatasetFieldTypeIncludedAsInputLevel(Long datasetFieldTypeId) {
+        return dataverseFieldTypeInputLevels.stream()
+                .anyMatch(inputLevel -> inputLevel.getDatasetFieldType().getId().equals(datasetFieldTypeId) && inputLevel.isInclude());
+    }
+
+    public boolean isDatasetFieldTypeInInputLevels(Long datasetFieldTypeId) {
+        return dataverseFieldTypeInputLevels.stream()
+                .anyMatch(inputLevel -> inputLevel.getDatasetFieldType().getId().equals(datasetFieldTypeId));
+    }
 
     public Template getDefaultTemplate() {
         return defaultTemplate;
@@ -461,9 +475,6 @@ public class Dataverse extends DvObjectContainer {
     public void setTemplateRoot(boolean templateRoot) {
         this.templateRoot = templateRoot;
     }
-
-   
-
 
     public List<MetadataBlock> getMetadataBlocks() {
         return getMetadataBlocks(false);
