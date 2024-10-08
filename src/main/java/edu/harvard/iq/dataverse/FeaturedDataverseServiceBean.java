@@ -70,8 +70,11 @@ public class FeaturedDataverseServiceBean {
             }
 
             dataverse.setDataverseTheme(dataverseService.findDataverseThemeByIdQuick(id));
-            if (dataverse.getDataverseTheme()!=null){
-                logger.fine("THEME: "+dataverse.getDataverseTheme().getLogo()+", "+dataverse.getDataverseTheme().getLogoFormat());
+            if (dataverse.getDataverseTheme() != null) {
+                logger.fine("THEME: "
+                        + dataverse.getDataverseTheme().getLogo() + ", "
+                        + dataverse.getDataverseTheme().getLogoFormat() + ", "
+                        + dataverse.getDataverseTheme().getLogoThumbnail());
             }
             ret.add(dataverse);
          }

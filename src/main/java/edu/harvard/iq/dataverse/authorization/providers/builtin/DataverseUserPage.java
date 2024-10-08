@@ -585,6 +585,8 @@ public class DataverseUserPage implements java.io.Serializable {
                 case GLOBUSUPLOADCOMPLETEDWITHERRORS:
                 case GLOBUSDOWNLOADCOMPLETED:
                 case GLOBUSDOWNLOADCOMPLETEDWITHERRORS:
+                case GLOBUSUPLOADREMOTEFAILURE:
+                case GLOBUSUPLOADLOCALFAILURE: 
                     userNotification.setTheObject(datasetService.find(userNotification.getObjectId()));
                     break;
 

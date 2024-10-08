@@ -26,10 +26,12 @@ public class DatasetRelPublication {
     private String description;
     private boolean replicationData;
     private int displayOrder;
+    private String relationType;
 
     public int getDisplayOrder() {
         return displayOrder;
     }
+
     public void setDisplayOrder(int displayOrder) {
         this.displayOrder = displayOrder;
     }
@@ -65,8 +67,7 @@ public class DatasetRelPublication {
     public void setUrl(String url) {
         this.url = url;
     }
-    
-    
+
     public String getTitle() {
         return title;
     }
@@ -83,6 +84,15 @@ public class DatasetRelPublication {
         this.description = description;
     }
 
+    public void setRelationType(String type) {
+        relationType = type;
+
+    }
+
+    public String getRelationType() {
+        return relationType;
+    }
+
     public String getLocaleTitle() {
         return BundleUtil.getStringFromBundle("dataset.relpublication.title");
     }
@@ -91,12 +101,12 @@ public class DatasetRelPublication {
         return BundleUtil.getStringFromBundle("dataset.relpublication.description");
     }
 
-     public boolean isEmpty() {
-        return ((text==null || text.trim().equals(""))
-            && (!replicationData)
-            && (idType==null || idType.trim().equals(""))
-            && (idNumber==null || idNumber.trim().equals(""))                
-            && (url==null || url.trim().equals("")));
-    }        
+    public boolean isEmpty() {
+        return ((text == null || text.trim().equals(""))
+                && (!replicationData)
+                && (idType == null || idType.trim().equals(""))
+                && (idNumber == null || idNumber.trim().equals(""))
+                && (url == null || url.trim().equals("")));
+    }
 
 }
