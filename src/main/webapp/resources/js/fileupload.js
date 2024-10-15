@@ -228,7 +228,7 @@ var fileUpload = class fileUploadClass {
                                 }
                         };
                         if (url.includes("x-amz-tagging")) {
-                                //request.headers = { "x-amz-tagging": "dv-state=temp" };
+                                request.headers = { "x-amz-tagging": "dv-state=temp" };
                         }
                         $.ajax(request);
                 } else {
