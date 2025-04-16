@@ -176,6 +176,7 @@ public class LoginPage implements java.io.Serializable {
             String affiliation = r.getAffiliation();
             String alias = affiliationBean.getAlias(affiliation);
             Dataverse dv = dataverseService.findByAlias(alias);
+            dv.getContactEmails(); //jc added for testing
             if (dv == null || !dv.isReleased()) {
                 alias = "";
             }

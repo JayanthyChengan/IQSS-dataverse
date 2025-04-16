@@ -70,12 +70,12 @@ public class RTabFileParser implements java.io.Serializable {
             varQnty = dataTable.getVarQuantity().intValue();
         } catch (Exception ex) {
             //return -1;
-            throw new IOException (BundleUtil.getStringFromBundle("rtabfileparser.ioexception.parser1"));
+            throw new IOException (BundleUtil.getStringFromBundle("rtabfileparser.ioexception.parser1", BundleUtil.getCurrentLocale()));
         }
 
         if (varQnty == 0) {
             //return -1;
-            throw new IOException (BundleUtil.getStringFromBundle("rtabfileparser.ioexception.parser2"));
+            throw new IOException (BundleUtil.getStringFromBundle("rtabfileparser.ioexception.parser2", BundleUtil.getCurrentLocale()));
         }
 
         dbgLog.fine("CSV reader; varQnty: "+varQnty);
@@ -157,12 +157,12 @@ public class RTabFileParser implements java.io.Serializable {
             valueTokens = line.split(""+delimiterChar, -2);
 
             if (valueTokens == null) {
-                throw new IOException(BundleUtil.getStringFromBundle("rtabfileparser.ioexception.failed" , Arrays.asList(Integer.toString(lineCounter + 1))));
+                throw new IOException(BundleUtil.getStringFromBundle("rtabfileparser.ioexception.failed" , Arrays.asList(Integer.toString(lineCounter + 1)), BundleUtil.getCurrentLocale()));
 
             }
 
             if (valueTokens.length != varQnty) {
-                throw new IOException(BundleUtil.getStringFromBundle("rtabfileparser.ioexception.mismatch" , Arrays.asList(Integer.toString(lineCounter + 1),Integer.toString(varQnty),Integer.toString(valueTokens.length))));
+                throw new IOException(BundleUtil.getStringFromBundle("rtabfileparser.ioexception.mismatch" , Arrays.asList(Integer.toString(lineCounter + 1),Integer.toString(varQnty),Integer.toString(valueTokens.length)), BundleUtil.getCurrentLocale()));
             }
 
             //dbgLog.fine("case: "+lineCounter);
@@ -254,10 +254,10 @@ public class RTabFileParser implements java.io.Serializable {
                             // Legit case - Missing Value!
                             caseRow[i] = charToken;
                         } else {
-                            throw new IOException(BundleUtil.getStringFromBundle("rtabfileparser.ioexception.boolean" , Arrays.asList(Integer.toString( +i)))+charToken);
+                            throw new IOException(BundleUtil.getStringFromBundle("rtabfileparser.ioexception.boolean" , Arrays.asList(Integer.toString( +i)), BundleUtil.getCurrentLocale())+charToken);
                         }
                     } else {
-                        throw new IOException(BundleUtil.getStringFromBundle("rtabfileparser.ioexception.read" , Arrays.asList(Integer.toString(i))));
+                        throw new IOException(BundleUtil.getStringFromBundle("rtabfileparser.ioexception.read" , Arrays.asList(Integer.toString(i)), BundleUtil.getCurrentLocale()));
                     }
 
                     

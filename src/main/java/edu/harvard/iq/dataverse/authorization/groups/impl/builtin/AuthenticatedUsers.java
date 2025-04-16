@@ -33,7 +33,7 @@ public class AuthenticatedUsers implements Group {
 
     @Override
     public String getIdentifier() {
-        return ":authenticated-users";
+        return ":authenticated-users"; //DAT-186
     }
 
     @Override

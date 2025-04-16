@@ -662,7 +662,7 @@ public class Dataverse extends DvObjectContainer {
      *  string if there are no contacts.
      * @author bencomp
      */
-    public String getContactEmails() {
+    public String getContactEmails() {  //jc
         if (dataverseContacts != null && !dataverseContacts.isEmpty()) {
             StringBuilder buf = new StringBuilder();
             Iterator<DataverseContact> it = dataverseContacts.iterator();

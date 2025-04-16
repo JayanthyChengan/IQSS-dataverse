@@ -114,7 +114,7 @@ public class CSVFileReader extends TabularDataFileReader {
         init();
 
         if (stream == null) {
-            throw new IOException(BundleUtil.getStringFromBundle("ingest.csv.nullStream"));
+            throw new IOException(BundleUtil.getStringFromBundle("ingest.csv.nullStream", BundleUtil.getCurrentLocale()));
         }
         TabularDataIngest ingesteddata = new TabularDataIngest();
         DataTable dataTable = new DataTable();
@@ -151,7 +151,7 @@ public class CSVFileReader extends TabularDataFileReader {
                 // TODO:
                 // Add a sensible variable name validation algorithm.
                 // -- L.A. 4.0 alpha 1
-                throw new IOException(BundleUtil.getStringFromBundle("ingest.csv.invalidHeader"));
+                throw new IOException(BundleUtil.getStringFromBundle("ingest.csv.invalidHeader", BundleUtil.getCurrentLocale()));
             }
 
             DataVariable dv = new DataVariable(i, dataTable);
@@ -208,7 +208,7 @@ public class CSVFileReader extends TabularDataFileReader {
                     List<String> args = Arrays.asList(new String[]{"" + (parser.getCurrentLineNumber() - 1),
                                                                    "" + headers.size(),
                                                                    "" + record.size()});
-                    throw new IOException(BundleUtil.getStringFromBundle("ingest.csv.recordMismatch", args));
+                    throw new IOException(BundleUtil.getStringFromBundle("ingest.csv.recordMismatch", args, BundleUtil.getCurrentLocale()));
                 }
 
                 for (i = 0; i < headers.size(); i++) {
@@ -366,7 +366,7 @@ public class CSVFileReader extends TabularDataFileReader {
                     List<String> args = Arrays.asList(new String[]{"" + (parser.getCurrentLineNumber() - 1),
                                                                    "" + headers.size(),
                                                                    "" + record.size()});
-                    throw new IOException(BundleUtil.getStringFromBundle("ingest.csv.recordMismatch", args));
+                    throw new IOException(BundleUtil.getStringFromBundle("ingest.csv.recordMismatch", args, BundleUtil.getCurrentLocale()));
                 }
 
                 for (i = 0; i < headers.size(); i++) {
@@ -478,7 +478,7 @@ public class CSVFileReader extends TabularDataFileReader {
         if (dataTable.getCaseQuantity().intValue() != linecount) {
             List<String> args = Arrays.asList(new String[]{"" + dataTable.getCaseQuantity().intValue(),
                                                            "" + linecount});
-            throw new IOException(BundleUtil.getStringFromBundle("ingest.csv.line_mismatch", args));
+            throw new IOException(BundleUtil.getStringFromBundle("ingest.csv.line_mismatch", args, BundleUtil.getCurrentLocale()));
         }
         return (int) linecount;
     }

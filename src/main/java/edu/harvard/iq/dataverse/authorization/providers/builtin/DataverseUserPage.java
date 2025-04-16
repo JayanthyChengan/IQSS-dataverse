@@ -835,7 +835,7 @@ public class DataverseUserPage implements java.io.Serializable {
         return disabledNotifications.contains(t);
     }
 
-    public List<String> getAffiliationList() {
+    public List<String> getAffiliationList() {  // JC
         affiliationList.clear();
         ResourceBundle bundle = BundleUtil.getResourceBundle("affiliation");
 
@@ -887,6 +887,9 @@ public class DataverseUserPage implements java.io.Serializable {
             }
             affiliation = affiliationServiceBean.getLocalizedAffiliation(affiliation);
             sendFeedbackDialog.setMessageAffiliation(affiliation);
+            String alias = affiliationServiceBean.getAlias(affiliation);// JC added for testing
+            Dataverse dv = dataverseService.findByAlias(alias);// JC added for testing
+            sendFeedbackDialog.setToDataverseContactEmail(dv.getContactEmails()); //jc added for testing
         }
         return affiliationList;
     }

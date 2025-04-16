@@ -236,7 +236,7 @@ public class DatasetsIT {
         testDatasetSchemaValidationHelper(dataverseAlias, apiToken,
                 "\"typeName\": \"datasetContactName\",",
                 "\"typeName\": \"datasetContactNme\",",
-                BundleUtil.getStringFromBundle("schema.validation.exception.compound.mismatch", List.of("datasetContactName", "datasetContactNme"))
+                BundleUtil.getStringFromBundle("schema.validation.exception.compound.mismatch", List.of("datasetContactName", "datasetContactNme"),BundleUtil.getCurrentLocale())
         );
 
         // add a typeName which is not allowed

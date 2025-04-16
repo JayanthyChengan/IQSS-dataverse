@@ -218,7 +218,7 @@ public class DashboardUsersPage implements java.io.Serializable {
         this.affiliationGroups = affiliationGroups;
     }
 
-    public List<String> getAffiliationList() {
+    public List<String> getAffiliationList() {  //JC
         ResourceBundle bundle = BundleUtil.getResourceBundle("affiliation", new Locale("en"));
         List<String> values = affiliationServiceBean.getValues(bundle);
 

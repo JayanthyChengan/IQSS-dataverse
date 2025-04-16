@@ -47,6 +47,7 @@ public class SendFeedbackDialog implements java.io.Serializable {
 
     private String messageAffiliation = "";
 
+    private String toDataverseContactEmail = "";
     /**
      * First operand in addition problem.
      */
@@ -183,12 +184,20 @@ public class SendFeedbackDialog implements java.io.Serializable {
         return messageSubject;
     }
 
-    public void setMessageAffiliation(String messageAffiliation) {
+    public void setMessageAffiliation(String messageAffiliation) {  // JC added for testing
         this.messageAffiliation = messageAffiliation;
     }
 
     public String getMessageAffiliation() {
         return messageAffiliation;
+    }
+
+    public String getToDataverseContactEmail() {
+        return toDataverseContactEmail;
+    }
+
+    public void setToDataverseContactEmail(String toDataverseContactEmail) {
+        this.toDataverseContactEmail = toDataverseContactEmail;
     }
 
     public boolean isLoggedIn() {
@@ -234,7 +243,12 @@ public class SendFeedbackDialog implements java.io.Serializable {
             return null;
         }
         logger.fine("sending feedback: " + feedback);
-        mailService.sendMail(feedback.getFromEmail(), feedback.getToEmail(), feedback.getCcEmail(), feedback.getSubject(), feedback.getBody());
+        if (feedbackTarget != null) {
+            mailService.sendMail(feedback.getFromEmail(), feedback.getToEmail(), feedback.getCcEmail(), feedback.getSubject(), feedback.getBody());
+        }
+        else {
+            mailService.sendMail(feedback.getFromEmail(), toDataverseContactEmail, feedback.getCcEmail(), feedback.getSubject(), feedback.getBody());
+        }
         JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("contact.sent"));
         return null;
     }
@@ -249,5 +263,6 @@ public class SendFeedbackDialog implements java.io.Serializable {
 
         return feedbackTarget!=null && ccSupport.isPresent() &&ccSupport.get();
     }
+
 
 }

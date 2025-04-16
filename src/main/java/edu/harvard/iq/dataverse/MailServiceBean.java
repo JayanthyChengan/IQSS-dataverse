@@ -118,7 +118,7 @@ public class MailServiceBean implements java.io.Serializable {
         }
         InternetAddress systemAddress = optionalAddress.get();
         InternetAddress supportAddress = getSupportAddress().orElse(systemAddress);
-
+//jc
         String body = messageText +
             BundleUtil.getStringFromBundle(isHtmlContent ? "notification.email.closing.html" : "notification.email.closing",
                 List.of(BrandingUtil.getSupportTeamEmailAddress(supportAddress), BrandingUtil.getSupportTeamName(supportAddress)));
@@ -280,7 +280,7 @@ public class MailServiceBean implements java.io.Serializable {
         String emailAddress = getUserEmailAddress(notification);
         if (emailAddress != null){
            Object objectOfNotification =  getObjectOfNotification(notification);
-           if (objectOfNotification != null){
+           if (objectOfNotification != null){//jc
                String messageText = getMessageTextBasedOnNotification(notification, objectOfNotification, comment, requestor);
                String subjectText = MailUtil.getSubjectTextBasedOnNotification(notification, objectOfNotification);
                if (!(messageText.isEmpty() || subjectText.isEmpty())){
@@ -362,7 +362,7 @@ public class MailServiceBean implements java.io.Serializable {
      */
     private String getDvObjectTypeString(DvObject d) {
         if (d instanceof Dataverse) {
-            return "dataverse";
+            return "dataverse"; // JC need translation
         } else if (d instanceof Dataset) {
             return "dataset";
         } else if (d instanceof DataFile) {
@@ -483,7 +483,7 @@ public class MailServiceBean implements java.io.Serializable {
                 String datasetCreatedMessage = BundleUtil.getStringFromBundle("notification.email.createDataset", Arrays.asList(
                         version.getDataset().getDisplayName(),
                         getDatasetLink(version.getDataset()),
-                        version.getDataset().getOwner().getDisplayName(),
+                        version.getDataset().getOwner().getDisplayName(),//jc
                         getDataverseLink(version.getDataset().getOwner()),
                         systemConfig.getGuidesBaseUrl(),
                         systemConfig.getGuidesVersion()

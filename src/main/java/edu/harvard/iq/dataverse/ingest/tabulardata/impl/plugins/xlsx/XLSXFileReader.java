@@ -93,15 +93,15 @@ public class XLSXFileReader extends TabularDataFileReader {
         try {
             processSheet(stream, dataTable, firstPassWriter);
         } catch (Exception ex) {
-            throw new IOException(BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.parse" , Arrays.asList(ex.getMessage())));
+            throw new IOException(BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.parse" , Arrays.asList(ex.getMessage()), BundleUtil.getCurrentLocale()));
         }
 
         if (dataTable.getCaseQuantity() == null || dataTable.getCaseQuantity().intValue() < 1) {
             String errorMessage; 
             if (dataTable.getVarQuantity() == null || dataTable.getVarQuantity().intValue() < 1) {
-                errorMessage = BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.norows");
+                errorMessage = BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.norows", BundleUtil.getCurrentLocale());
             } else {
-                errorMessage = BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.onlyonerow");
+                errorMessage = BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.onlyonerow", BundleUtil.getCurrentLocale());
             }
             throw new IOException(errorMessage);
         }
@@ -130,11 +130,11 @@ public class XLSXFileReader extends TabularDataFileReader {
             valueTokens = line.split("" + delimiterChar, -2);
 
             if (valueTokens == null) {
-                throw new IOException(BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.failed" , Arrays.asList(Integer.toString(lineCounter + 1))));
+                throw new IOException(BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.failed" , Arrays.asList(Integer.toString(lineCounter + 1)), BundleUtil.getCurrentLocale()));
             }
 
             if (valueTokens.length != varQnty) {
-                throw new IOException(BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.mismatch" , Arrays.asList(Integer.toString(lineCounter + 1),Integer.toString(varQnty),Integer.toString(valueTokens.length))));
+                throw new IOException(BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.mismatch" , Arrays.asList(Integer.toString(lineCounter + 1),Integer.toString(varQnty),Integer.toString(valueTokens.length)), BundleUtil.getCurrentLocale()));
             }
         
             for (int i = 0; i < varQnty; i++) {
@@ -200,7 +200,7 @@ public class XLSXFileReader extends TabularDataFileReader {
         finalWriter.close();
         
         if (dataTable.getCaseQuantity().intValue() != lineCounter) {
-            throw new IOException(BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.linecount"));
+            throw new IOException(BundleUtil.getStringFromBundle("xlsxfilereader.ioexception.linecount", BundleUtil.getCurrentLocale()));
         }
         
         dataTable.setUnf("UNF:6:NOTCALCULATED");
